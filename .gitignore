@@ -1,0 +1,27 @@
+### Gradle ###
+.gradle/
+.build/
+gradle/build-logic/build/
+/local.properties
+
+### IntelliJ IDEA ###
+*.iws
+*.iml
+*.ipr
+
+## IDEA config files
+/.idea/**
+!/.idea/copyright/
+!/.idea/copyright/**
+!/.idea/codeStyles/
+!/.idea/codeStyles/**
+!/.idea/inspectionProfiles/
+!/.idea/inspectionProfiles/**
+!/.idea/runConfigurations/
+!/.idea/runConfigurations/**
+!/.idea/jsonSchemas.xml
+# Plugins
+!/.idea/detekt.xml
+
+### Mac OS ###
+.DS_Store
