@@ -52,6 +52,11 @@ class Processor(
       packageName = packageName,
     )
 
+    if (context.preferences.isEmpty() && context.typeConverters.isEmpty()) {
+      logger.info("No @Preferences or @TypeConverters found.")
+      return emptyList()
+    }
+
     arrayOf(
       MutableClasses(context),
       FactoryClass(context),
@@ -63,15 +68,17 @@ class Processor(
     return emptyList()
   }
 
-  private fun Resolver.filterPreferences(): Sequence<KSClassDeclaration> =
+  private fun Resolver.filterPreferences(): List<KSClassDeclaration> =
     getSymbolsWithAnnotation(Preferences.canonicalName)
       .filterIsInstance<KSClassDeclaration>()
       .onEach { it.checkPreferences() }
+      .toList()
 
-  private fun Resolver.filterTypeConverters(): Sequence<KSClassDeclaration> =
+  private fun Resolver.filterTypeConverters(): List<KSClassDeclaration> =
     getSymbolsWithAnnotation(TypeConverters.canonicalName)
       .filterIsInstance<KSClassDeclaration>()
       .onEach { it.checkTypeConverters() }
+      .toList()
 
   private fun KSClassDeclaration.checkPreferences() {
     require(Modifier.DATA in modifiers) {

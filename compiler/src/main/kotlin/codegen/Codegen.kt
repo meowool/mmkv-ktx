@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package com.meowool.mmkv.ktx.compiler.codegen
 
 import com.google.devtools.ksp.findActualType
@@ -33,13 +35,15 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ksp.kspDependencies
 import com.squareup.kotlinpoet.ksp.originatingKSFiles
-import com.squareup.kotlinpoet.ksp.writeTo
 import java.util.Locale
 
-interface Codegen {
-  val context: Context
-  fun generate()
+abstract class Codegen {
+  abstract val context: Context
+  abstract fun generate()
+
+  open fun String.fixGeneratedCode() = this
 
   fun start() = try {
     generate()
@@ -52,9 +56,21 @@ interface Codegen {
     simpleName = simpleName.asString()
   )
 
-  fun KSDeclaration.fullName() = qualifiedName?.asString() ?: simpleName.asString()
+  fun KSDeclaration.logName() = qualifiedName?.asString() ?: simpleName.asString()
+
+  fun KSTypeReference?.logName(): String = buildString {
+    val type = this@logName?.resolve() ?: return@buildString
+    append(type.declaration.simpleName.asString())
+    if (type.arguments.isNotEmpty()) {
+      append("<")
+      append(type.arguments.joinToString { it.type!!.logName() })
+      append(">")
+    }
+    if (type.isMarkedNullable) append("?")
+  }
 
   fun KSTypeReference?.matches(other: Any?): Boolean {
+    if (this == null && other == null) return true
     if (this == null || other == null) return false
     val aType = resolve()
     val a = aType.declaration
@@ -76,11 +92,18 @@ interface Codegen {
     return a.qualifiedName?.asString() == b.qualifiedName?.asString()
   }
 
+  fun KSType?.matchesNullable(other: KSType?): Boolean {
+    if (this == null && other == null) return true
+    if (this == null || other == null) return false
+    if (this.isMarkedNullable != other.isMarkedNullable) return false
+    return true
+  }
+
   fun Sequence<KSTypeReference>.contains(className: ClassName) = any {
     it.resolve().declaration.qualifiedName?.asString() == className.canonicalName
   }
 
-  fun KSTypeReference.findActualDeclaration() = when (val symbol = resolve().declaration) {
+  fun KSType.findActualDeclaration() = when (val symbol = declaration) {
     is KSClassDeclaration -> symbol
     is KSTypeAlias -> symbol.findActualType()
     else -> {
@@ -110,16 +133,27 @@ interface Codegen {
   fun FileSpec.write(originatingDeclaration: KSDeclaration) =
     write(listOf(originatingDeclaration.containingFile!!))
 
-  fun FileSpec.write(originatingKSFiles: Iterable<KSFile> = originatingKSFiles()) =
-    writeTo(context.codeGenerator, aggregating = true, originatingKSFiles)
+  @JvmName("writeWithFiles")
+  fun FileSpec.write(originatingKSFiles: Iterable<KSFile> = originatingKSFiles()) {
+    val dependencies = kspDependencies(aggregating = true, originatingKSFiles)
+    val source = this.toString().fixGeneratedCode()
+      .replace("`get`", "get")
+      .replace("`set`", "set")
+      .replace("`value`", "value")
+
+    context.codeGenerator
+      .createNewFile(dependencies, packageName, name)
+      .bufferedWriter()
+      .use { it.write(source) }
+  }
 
   fun String.lowercaseFirstChar() = replaceFirstChar { it.lowercase(Locale.getDefault()) }
 
   fun String.uppercaseFirstChar() = replaceFirstChar { it.uppercase(Locale.getDefault()) }
 
   data class Context(
-    val preferences: Sequence<KSClassDeclaration>,
-    val typeConverters: Sequence<KSClassDeclaration>,
+    val preferences: List<KSClassDeclaration>,
+    val typeConverters: List<KSClassDeclaration>,
     val logger: KSPLogger,
     val codeGenerator: CodeGenerator,
     val packageName: String,

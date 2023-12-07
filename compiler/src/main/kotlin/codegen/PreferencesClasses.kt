@@ -20,7 +20,6 @@ package com.meowool.mmkv.ktx.compiler.codegen
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.meowool.mmkv.ktx.compiler.Names.StateFlow
-import com.meowool.mmkv.ktx.compiler.codegen.Codegen.Context
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -30,25 +29,29 @@ import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.LambdaTypeName.Companion.get as lambdaType
 
-class PreferencesClasses(override val context: Context) : Codegen {
+class PreferencesClasses(override val context: Context) : Codegen() {
   override fun generate() = context.preferences.forEach(::generatePreferences)
 
   private fun generatePreferences(preferences: KSClassDeclaration) {
     val className = context.preferencesClassName(preferences)
 
     val getSpec = FunSpec.builder("get")
+      .addModifiers(KModifier.ABSTRACT)
       .returns(preferences.toClassName())
       .build()
 
     val mutableSpec = FunSpec.builder("mutable")
+      .addModifiers(KModifier.ABSTRACT)
       .returns(context.mutableClassName(preferences))
       .build()
 
     val updateSpec = FunSpec.builder("update")
+      .addModifiers(KModifier.ABSTRACT)
       .addParameter("mutable", context.mutableClassName(preferences))
       .build()
 
     val asStateFlowSpec = FunSpec.builder("asStateFlow")
+      .addModifiers(KModifier.ABSTRACT)
       .returns(StateFlow.parameterizedBy(preferences.toClassName()))
       .build()
 
@@ -61,7 +64,13 @@ class PreferencesClasses(override val context: Context) : Codegen {
 
     val updateInlineSpec = FunSpec.builder("update")
       .addModifiers(KModifier.INLINE)
-      .addParameter("block", lambdaType(context.mutableClassName(preferences), returnType = UNIT))
+      .addParameter(
+        name = "block",
+        type = lambdaType(
+          parameters = arrayOf(context.mutableClassName(preferences)),
+          returnType = UNIT
+        )
+      )
       .receiver(className)
       .addStatement("return update(this.mutable().apply(block))")
       .build()

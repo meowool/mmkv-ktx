@@ -20,14 +20,14 @@ package com.meowool.mmkv.ktx.compiler.codegen
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.meowool.mmkv.ktx.compiler.Names
-import com.meowool.mmkv.ktx.compiler.codegen.Codegen.Context
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
-open class FactoryClass(override val context: Context) : Codegen {
+open class FactoryClass(override val context: Context) : Codegen() {
   override fun generate() {
     val className = context.factoryClassName
     val classBuilder = TypeSpec.interfaceBuilder(className)
@@ -44,12 +44,18 @@ open class FactoryClass(override val context: Context) : Codegen {
     val classSpec = classBuilder.build()
 
     val factorySpec = FunSpec.builder(className.simpleName)
+      .returns(className)
       .addModifiers(KModifier.INLINE)
       .addStatement("return %T()", context.factoryImplClassName)
       .build()
 
     // TODO: Add KDoc for generated symbols.
     FileSpec.builder(className)
+      .addAnnotation(
+        AnnotationSpec.builder(Suppress::class)
+          .addMember("%S", "NOTHING_TO_INLINE")
+          .build()
+      )
       .addType(classSpec)
       .addFunction(factorySpec)
       .build()

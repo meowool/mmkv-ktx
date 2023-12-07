@@ -18,7 +18,6 @@
 
 package com.meowool.mmkv.ktx.compiler.codegen
 
-import com.meowool.mmkv.ktx.compiler.codegen.Codegen.Context
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -37,8 +36,10 @@ class FactoryImplClass(context: Context) : FactoryClass(context) {
     preferences.forEach {
       val propertyName = it.preferencesName()
       val type = context.preferencesClassName(it)
+      val typeNullable = type.copy(nullable = true)
 
-      val innerPropertySpec = PropertySpec.builder(name = "_$propertyName", type)
+      val innerPropertySpec = PropertySpec.builder(name = "_$propertyName", typeNullable)
+        .initializer("null")
         .mutable()
         .addModifiers(KModifier.PRIVATE)
         .addAnnotation(Volatile::class)
@@ -47,12 +48,16 @@ class FactoryImplClass(context: Context) : FactoryClass(context) {
       val overridePropertySpec = PropertySpec.builder(propertyName, type)
         .addModifiers(KModifier.OVERRIDE)
         .getter(
-          FunSpec.getterBuilder().addStatement(
-            "return synchronized(this) { %N ?: %T().also { %N = it } }",
-            innerPropertySpec,
-            context.preferencesImplClassName(it),
-            innerPropertySpec,
-          ).build()
+          FunSpec.getterBuilder()
+            .beginControlFlow("return synchronized(this)")
+            .addStatement(
+              "%N·?:·%T().also·{·%N·=·it·}",
+              innerPropertySpec,
+              context.preferencesImplClassName(it),
+              innerPropertySpec,
+            )
+            .endControlFlow()
+            .build()
         )
         .build()
 

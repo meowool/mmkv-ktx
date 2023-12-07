@@ -27,6 +27,8 @@ import com.squareup.kotlinpoet.FileSpec
 object Names {
   private const val PACKAGE = "com.meowool.mmkv.ktx"
 
+  val Deprecated = ClassName("kotlin", "Deprecated")
+  val DeprecationLevel = ClassName("kotlin", "DeprecationLevel")
   val StateFlow = ClassName("kotlinx.coroutines.flow", "StateFlow")
   val MutableStateFlow = ClassName(StateFlow.packageName, "MutableStateFlow")
   val MMKV = ClassName("com.tencent.mmkv", "MMKV")
@@ -34,6 +36,7 @@ object Names {
 
   val Preferences = ClassName(PACKAGE, "Preferences")
   val TypeConverters = ClassName(PACKAGE, "TypeConverters")
+  val BuiltInConverters = ClassName(PACKAGE, "BuiltInConverters")
 
   fun FileSpec.Builder.addWriteOnlyImport(suppress: Boolean = true) = addInvisibleSuppress(suppress)
     .addImport(PACKAGE, "WRITE_ONLY")

@@ -20,18 +20,24 @@ package com.meowool.mmkv.ktx.compiler.codegen
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
+import com.meowool.mmkv.ktx.compiler.Names.Deprecated
+import com.meowool.mmkv.ktx.compiler.Names.DeprecationLevel
 import com.meowool.mmkv.ktx.compiler.Names.addWriteOnlyImport
-import com.meowool.mmkv.ktx.compiler.codegen.Codegen.Context
-import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 
-class MutableClasses(override val context: Context) : Codegen {
+class MutableClasses(override val context: Context) : Codegen() {
   override fun generate() = context.preferences.forEach(::generateMutableClass)
+
+  override fun String.fixGeneratedCode(): String = replace(
+    oldValue = "= $PLACEHOLDER_INITIALIZER",
+    newValue = "@Deprecated(WRITE_ONLY, level = HIDDEN) get",
+  )
 
   private fun generateMutableClass(preferences: KSClassDeclaration) {
     val className = context.mutableClassName(preferences)
@@ -41,6 +47,7 @@ class MutableClasses(override val context: Context) : Codegen {
     val properties = constructor.parameters
 
     val conversionSpec = FunSpec.builder("toImmutable")
+      .addModifiers(KModifier.ABSTRACT)
       .returns(preferences.toClassName())
       .build()
 
@@ -51,6 +58,8 @@ class MutableClasses(override val context: Context) : Codegen {
 
     // TODO: Add KDoc for generated symbols.
     FileSpec.builder(className)
+      .addImport(Deprecated.packageName, Deprecated.simpleName)
+      .addImport(DeprecationLevel, "HIDDEN")
       .addWriteOnlyImport()
       .addType(classSpec)
       .build()
@@ -62,16 +71,13 @@ class MutableClasses(override val context: Context) : Codegen {
   }
 
   private fun List<KSValueParameter>.mapProperties() = map {
-    val getter = FunSpec.getterBuilder().addAnnotation(
-      AnnotationSpec.builder(Deprecated::class)
-        .addMember("WRITE_ONLY")
-        .addMember("level = %T.HIDDEN", DeprecationLevel::class)
-        .build()
-    ).build()
-
     PropertySpec.builder(it.name!!.asString(), it.type.toTypeName())
-      .getter(getter)
+      .initializer(PLACEHOLDER_INITIALIZER)
       .mutable()
       .build()
+  }
+
+  private companion object {
+    const val PLACEHOLDER_INITIALIZER = "???"
   }
 }
