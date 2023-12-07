@@ -16,11 +16,17 @@
  * limitations under the License.
  */
 
+import com.android.build.api.dsl.ApplicationDefaultConfig
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.gradle.BasePlugin
+
 plugins {
   alias(libs.plugins.detekt)
   alias(libs.plugins.android.library) apply false
+  alias(libs.plugins.android.application) apply false
   alias(libs.plugins.kotlin.android) apply false
   alias(libs.plugins.kotlin.jvm) apply false
+  alias(libs.plugins.kotlin.parcelize) apply false
 }
 
 detekt {
@@ -32,4 +38,21 @@ detekt {
 allprojects {
   group = "com.meowool"
   version = "0.1.0"
+  project.configureAndroid()
+}
+
+fun Project.configureAndroid() = plugins.withType<BasePlugin> {
+  (extensions["android"] as CommonExtension<*, *, *, *, *>).apply {
+    compileSdk = 34
+    testOptions.unitTests.isIncludeAndroidResources = true
+    defaultConfig {
+      minSdk = 16
+      testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+      if (this is ApplicationDefaultConfig) targetSdk = 34
+    }
+    compileOptions {
+      sourceCompatibility = JavaVersion.VERSION_17
+      targetCompatibility = JavaVersion.VERSION_17
+    }
+  }
 }

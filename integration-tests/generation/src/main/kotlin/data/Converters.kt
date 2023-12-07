@@ -16,18 +16,15 @@
  * limitations under the License.
  */
 
-plugins {
-  alias(libs.plugins.android.library)
-  alias(libs.plugins.kotlin.android)
-}
+package com.meowool.mmkv.ktx.tests.data
 
-android {
-  namespace = "$group.mmkv.ktx"
-}
+import com.meowool.mmkv.ktx.TypeConverters
+import java.util.Date
 
-dependencies {
-  arrayOf(
-    libs.kotlin.coroutines,
-    libs.mmkv,
-  ).forEach(::api)
+@TypeConverters
+object Converters {
+  fun Date.toLong(): Long = time
+  fun Long.toDate(): Date = Date(this)
+  fun Date?.toLong(): Long = this?.time ?: -1
+  fun Long.toDateNullable(): Date? = if (this == -1L) null else Date(this)
 }

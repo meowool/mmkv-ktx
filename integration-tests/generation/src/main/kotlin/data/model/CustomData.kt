@@ -16,18 +16,13 @@
  * limitations under the License.
  */
 
-plugins {
-  alias(libs.plugins.android.library)
-  alias(libs.plugins.kotlin.android)
-}
+package com.meowool.mmkv.ktx.tests.data.model
 
-android {
-  namespace = "$group.mmkv.ktx"
-}
+import com.meowool.mmkv.ktx.Preferences
+import java.util.Date
 
-dependencies {
-  arrayOf(
-    libs.kotlin.coroutines,
-    libs.mmkv,
-  ).forEach(::api)
-}
+@Preferences
+data class CustomData(
+  val date: Date = Date(),
+  val dateNullable: Date? = null,
+)

@@ -4,7 +4,6 @@ kotlin = "1.9.21"
 androidx-activity = "1.8.1"
 square-kotlinpoet = "1.14.2"
 google-hilt = "2.49"
-auto-service = "1.1.1"
 detekt = "1.23.4"
 
 [libraries]
@@ -16,7 +15,7 @@ androidx-core = "androidx.core:core-ktx:1.12.0"
 androidx-test-core = "androidx.test:core-ktx:1.6.0-alpha03"
 androidx-test-rules = "androidx.test:rules:1.6.0-alpha02"
 androidx-test-runner = "androidx.test:runner:1.6.0-alpha05"
-androidx-test-ext-junit = "androidx.test.ext:junit-ktx:1.2.0-alpha01"
+androidx-test-ext-junit = "androidx.test.ext:junit-ktx:1.2.0-alpha02"
 androidx-activity = { module = "androidx.activity:activity-ktx", version.ref = "androidx-activity" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 ### Compose
@@ -34,8 +33,8 @@ android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 ### Others
 mmkv = "com.tencent:mmkv:1.3.2"
-auto-service = { module = "dev.zacsweers.autoservice:auto-service-ksp", version.ref = "auto-service" }
-auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
+auto-service = "dev.zacsweers.autoservice:auto-service-ksp:1.1.0"
+auto-service-annotations = "com.google.auto.service:auto-service-annotations:1.1.1"
 ## Detekt
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
@@ -52,4 +51,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 google-ksp = "com.google.devtools.ksp:1.9.21-1.0.15"

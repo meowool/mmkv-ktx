@@ -16,18 +16,20 @@
  * limitations under the License.
  */
 
-plugins {
-  alias(libs.plugins.android.library)
-  alias(libs.plugins.kotlin.android)
-}
+package com.meowool.mmkv.ktx.tests
 
-android {
-  namespace = "$group.mmkv.ktx"
-}
+import com.meowool.codegen.PreferencesFactory
+import com.meowool.codegen.update
 
-dependencies {
-  arrayOf(
-    libs.kotlin.coroutines,
-    libs.mmkv,
-  ).forEach(::api)
+val preferences = PreferencesFactory()
+
+fun main() {
+  preferences.customData.get().date
+  preferences.customData.get().dateNullable
+  preferences.customData.asStateFlow()
+
+  preferences.primitiveData.update {
+    it.int = 1
+    it.parcelableNullable = null
+  }
 }

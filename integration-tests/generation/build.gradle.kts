@@ -19,15 +19,17 @@
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.kotlin.parcelize)
+  alias(libs.plugins.google.ksp)
 }
 
 android {
-  namespace = "$group.mmkv.ktx"
+  namespace = "$group.mmkv.ktx.tests"
 }
 
 dependencies {
-  arrayOf(
-    libs.kotlin.coroutines,
-    libs.mmkv,
-  ).forEach(::api)
+  implementation(projects.runtime)
+  ksp(projects.compiler)
 }
+
+ksp.arg("mmkv.ktx.packageName", "$group.codegen")

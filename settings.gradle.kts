@@ -16,13 +16,8 @@
  * limitations under the License.
  */
 
-rootProject.name = "mmkv-ktx"
-
-pluginManagement.repositories {
-  gradlePluginPortal { filterAndroidDependencies(include = false) }
-  mavenCentral { filterAndroidDependencies(include = false) }
-  google { filterAndroidDependencies(include = true) }
-}
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -32,11 +27,21 @@ dependencyResolutionManagement {
   }
 }
 
-include(":runtime")
-include(":compiler")
+pluginManagement.repositories {
+  gradlePluginPortal { filterAndroidDependencies(include = false) }
+  mavenCentral { filterAndroidDependencies(include = false) }
+  google { filterAndroidDependencies(include = true) }
+}
 
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+// Include all possible subprojects (excluding root project and hidden directories)
+rootDir.walkTopDown()
+  .onEnter { it.name.first() != '.' }
+  .filter { it.isDirectory && it.resolve("build.gradle.kts").exists() }
+  .map { it.relativeTo(rootDir).path.replace(File.separatorChar, ':') }
+  .filter { it.isNotEmpty() }
+  .forEach { include(":$it") }
+
+rootProject.name = "mmkv-ktx"
 
 /**
  * Filtering Android dependencies across different repositories can reduce network
