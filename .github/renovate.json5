@@ -1,0 +1,53 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:base', ':automergeMinor'],
+  labels: ['dependencies', 'bot'],
+  platformAutomerge: true,
+  platformCommit: true,
+
+  // Check for updates only while sleeping to reduce Renovate bot PR
+  // notifications during the day
+  timezone: 'Asia/Shanghai',
+  schedule: ['after 1am and before 8am'],
+
+  // Conventional Commit: <type>(<scope>): update <dep> to <version>
+  semanticCommits: 'enabled',
+  commitMessageTopic: '{{depName}}',
+
+  packageRules: [
+    {
+      // Allow automerge for non-major updates
+      matchUpdateTypes: ['minor', 'patch'],
+      labels: ['no-major'],
+      automerge: true,
+    },
+    {
+      // Mark the commit type of updates for the Github actions
+      matchManagers: ['github-actions'],
+      semanticCommitType: 'ci',
+    },
+    {
+      // Group AndroidX dependencies together (excluding Compose)
+      matchPackagePrefixes: ['androidx'],
+      excludePackagePrefixes: ['androidx.compose'],
+      groupName: 'androidx dependencies',
+      automerge: true,
+    },
+    {
+      // Rename the AndroidX Compose group
+      matchPackagePatterns: ['.*:compose-bom:.*'],
+      groupName: 'androidx compose version',
+      automerge: true,
+    },
+    {
+      // Group Kotlin dependencies together
+      matchPackagePrefixes: [
+        'org.jetbrains.kotlin',
+        'org.jetbrains.kotlinx',
+        'com.google.devtools.ksp',
+      ],
+      groupName: 'kotlin dependencies',
+      automerge: true,
+    },
+  ],
+}
