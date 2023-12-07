@@ -31,9 +31,7 @@ import com.meowool.mmkv.ktx.compiler.Names.MMKV
 import com.meowool.mmkv.ktx.compiler.Names.MutableStateFlow
 import com.meowool.mmkv.ktx.compiler.Names.Parcelable
 import com.meowool.mmkv.ktx.compiler.Names.Preferences
-import com.meowool.mmkv.ktx.compiler.Names.addInternalImport
 import com.meowool.mmkv.ktx.compiler.Names.addInvisibleSuppress
-import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.BYTE_ARRAY
@@ -141,99 +139,88 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
     val mutableImplClassBuilder = TypeSpec.classBuilder(mutableImplClassName)
       .addModifiers(KModifier.INNER, KModifier.PRIVATE)
       .addSuperinterface(mutableClassName)
+      .addProperty(
+        PropertySpec.builder("old", dataClassName)
+          .addModifiers(KModifier.PRIVATE)
+          .initializer("get()")
+          .build()
+      )
       .addFunction(
         FunSpec.builder("toImmutable")
           .addModifiers(KModifier.OVERRIDE)
           .returns(dataClassName)
-          .beginControlFlow("return get().also { old ->")
           .addCode(buildCodeBlock {
+            add("return·")
             addStatement("%T(", dataClassName)
             indent()
             preferences.primaryConstructor?.parameters?.forEach { parameter ->
               val name = requireNotNull(parameter.name?.asString())
-              val new = "new${name.uppercaseFirstChar()}"
-              addStatement(
-                "%L = %N.takeIfChanged() ?: old.%L,",
-                name, new, name
-              )
+              addStatement("%L = %L,", name, name)
             }
             unindent()
             addStatement(")")
           })
-          .endControlFlow()
           .build()
       )
 
     preferences.primaryConstructor?.parameters?.forEach { parameter ->
       val name = requireNotNull(parameter.name?.asString())
-      val new = "new${name.uppercaseFirstChar()}"
       val type = parameter.type
       val resolvedType = type.resolve()
       val declaration = requireNotNull(resolvedType.findActualDeclaration())
       val primitive = resolveMMKVType(type, declaration)
 
-      val newPropertySpec = PropertySpec.builder(new, ANY.copy(nullable = true))
-        .mutable()
-        .addModifiers(KModifier.PRIVATE)
-        .initializer("UNCHANGED")
-        .build()
-
-      val overridePropertySpec = PropertySpec.builder(name, type.toTypeName())
-        .addModifiers(KModifier.OVERRIDE)
-        .getter(
-          FunSpec.getterBuilder()
-            .addStatement("throw %T(WRITE_ONLY)", UnsupportedOperationException::class)
-            .build()
-        )
-        .setter(
-          FunSpec.setterBuilder()
-            .addParameter("value", type.toTypeName())
-            .addCode(buildCodeBlock {
-              when {
-                primitive != null && resolvedType.isMarkedNullable -> when (primitive) {
-                  "Bool" -> addStatement(
-                    "mmkv.encode(%S, %T.encodeNullableBoolean(value))",
-                    name, BuiltInConverters
-                  )
-                  "Bytes", "String", "StringSet" -> addStatement("mmkv.encode(%S, value)", name)
-                  else -> addStatement(
-                    "mmkv.encode(%S, %T.encodeNullable%L(value))",
-                    name, BuiltInConverters, primitive
-                  )
-                }
-
-                primitive != null || declaration.superTypes.contains(Parcelable) ->
-                  addStatement("%N.encode(%S, value)", mmkvPropertySpec, name)
-
-                Modifier.ENUM in declaration.modifiers -> addStatement(
-                  when (resolvedType.isMarkedNullable) {
-                    true -> "%N.encode(%S, value?.ordinal ?: -1)"
-                    false -> "%N.encode(%S, value.ordinal)"
-                  },
-                  mmkvPropertySpec, name
-                )
-
-                else -> {
-                  val typeConverter = requireNotNull(resolvedType.findTypeConverter(declaration)) {
-                    "[${preferences.logName()}] " +
-                      "Unsupported type '${type.logName()}' for property '$name', " +
-                      "consider replacing it with a supported one or creating a type converter."
+      mutableImplClassBuilder.addProperty(
+        PropertySpec.builder(name, type.toTypeName())
+          .addModifiers(KModifier.OVERRIDE)
+          .initializer("old.%L", name)
+          .setter(
+            FunSpec.setterBuilder()
+              .addParameter("new", type.toTypeName())
+              .addCode(buildCodeBlock {
+                addStatement("field = new")
+                when {
+                  primitive != null && resolvedType.isMarkedNullable -> when (primitive) {
+                    "Bool" -> addStatement(
+                      "mmkv.encode(%S, %T.encodeNullableBoolean(new))",
+                      name, BuiltInConverters
+                    )
+                    "Bytes", "String", "StringSet" -> addStatement("mmkv.encode(%S, new)", name)
+                    else -> addStatement(
+                      "mmkv.encode(%S, %T.encodeNullable%L(new))",
+                      name, BuiltInConverters, primitive
+                    )
                   }
-                  addStatement(
-                    "%N.encode(%S, value.%M())",
-                    mmkvPropertySpec, name, typeConverter.encoderName,
-                  )
-                }
-              }
-              addStatement("%N = value", newPropertySpec)
-            })
-            .build()
-        )
-        .mutable()
-        .build()
 
-      mutableImplClassBuilder.addProperty(newPropertySpec)
-      mutableImplClassBuilder.addProperty(overridePropertySpec)
+                  primitive != null || declaration.superTypes.contains(Parcelable) ->
+                    addStatement("%N.encode(%S, new)", mmkvPropertySpec, name)
+
+                  Modifier.ENUM in declaration.modifiers -> addStatement(
+                    when (resolvedType.isMarkedNullable) {
+                      true -> "%N.encode(%S, new?.ordinal ?: -1)"
+                      false -> "%N.encode(%S, new.ordinal)"
+                    },
+                    mmkvPropertySpec, name
+                  )
+
+                  else -> {
+                    val typeConverter = requireNotNull(resolvedType.findTypeConverter(declaration)) {
+                      "[${preferences.logName()}] " +
+                        "Unsupported type '${type.logName()}' for property '$name', " +
+                        "consider replacing it with a supported one or creating a type converter."
+                    }
+                    addStatement(
+                      "%N.encode(%S, new.%M())",
+                      mmkvPropertySpec, name, typeConverter.encoderName,
+                    )
+                  }
+                }
+              })
+              .build()
+          )
+          .mutable()
+          .build()
+      )
     }
 
     val classSpec = TypeSpec.classBuilder(className)
@@ -252,7 +239,6 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
       .build()
 
     FileSpec.builder(className)
-      .addInternalImport()
       .addAnnotation(
         AnnotationSpec.builder(Suppress::class)
           .addInvisibleSuppress()

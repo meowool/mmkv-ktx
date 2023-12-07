@@ -136,10 +136,7 @@ abstract class Codegen {
   @JvmName("writeWithFiles")
   fun FileSpec.write(originatingKSFiles: Iterable<KSFile> = originatingKSFiles()) {
     val dependencies = kspDependencies(aggregating = true, originatingKSFiles)
-    val source = this.toString().fixGeneratedCode()
-      .replace("`get`", "get")
-      .replace("`set`", "set")
-      .replace("`value`", "value")
+    val source = this.toString().fixGeneratedCode().replace("`get`()", "get()")
 
     context.codeGenerator
       .createNewFile(dependencies, packageName, name)

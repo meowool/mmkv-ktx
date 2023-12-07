@@ -96,7 +96,9 @@ potential-bugs:
 style:
   excludes: *ExcludePatterns
   MaxLineLength:
-    maxLineLength: 100
+    # The best max line length is 100, but we can relax it a bit
+    # to avoid some unexpected situations.
+    maxLineLength: 110
     excludeCommentStatements: true
   WildcardImport:
     # We never want to use wildcard imports in our code
