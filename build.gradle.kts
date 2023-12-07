@@ -67,7 +67,7 @@ fun Project.configureAndroid() = plugins.withType<BasePlugin> {
 
 fun Project.configurePublish() = plugins.withType<MavenPublishPlugin> {
   extensions.configure<MavenPublishBaseExtension> {
-    publishToMavenCentral(SonatypeHost.S01)
+    publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
     signAllPublications()
     coordinates(
       groupId = project.group.toString(),
