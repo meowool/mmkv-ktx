@@ -23,8 +23,8 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.MavenPublishPlugin
 import com.vanniktech.maven.publish.SonatypeHost
 
-val isCiEnv = System.getenv("CI") != null
-val isRelease = System.getenv("RELEASE") != null
+val isCi = providers.environmentVariable("CI").isPresent
+val isSnapshot = isCi && providers.environmentVariable("RELEASE").orNull != "true"
 
 plugins {
   alias(libs.plugins.detekt)
@@ -38,13 +38,13 @@ plugins {
 
 detekt {
   buildUponDefaultConfig = true
-  parallel = isCiEnv
+  parallel = !isCi
   config.setFrom(layout.projectDirectory.file("detekt.yml"))
 }
 
 allprojects {
   group = "com.meowool"
-  version = "0.1.0" + if (isCiEnv && !isRelease) "-SNAPSHOT" else ""
+  version = "0.1.0" + if (isSnapshot) "-SNAPSHOT" else ""
   project.configureAndroid()
   project.configurePublish()
 }
