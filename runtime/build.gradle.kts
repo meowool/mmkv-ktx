@@ -19,15 +19,14 @@
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.maven.publish)
 }
 
 android {
   namespace = "$group.mmkv.ktx"
 }
 
-dependencies {
-  arrayOf(
-    libs.kotlin.coroutines,
-    libs.mmkv,
-  ).forEach(::api)
-}
+arrayOf(
+  libs.kotlin.coroutines,
+  libs.mmkv,
+).forEach(dependencies::api)

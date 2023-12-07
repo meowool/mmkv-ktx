@@ -19,6 +19,7 @@
 plugins {
   alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.google.ksp)
+  alias(libs.plugins.maven.publish)
 }
 
 dependencies {
