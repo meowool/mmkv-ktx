@@ -1,7 +1,6 @@
 ### Gradle ###
 .gradle/
-.build/
-gradle/build-logic/build/
+build/
 /local.properties
 
 ### IntelliJ IDEA ###
