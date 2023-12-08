@@ -44,7 +44,7 @@ detekt {
 
 allprojects {
   group = "com.meowool"
-  version = "0.1.1" + if (isSnapshot) "-SNAPSHOT" else ""
+  version = "0.1.2" + if (isSnapshot) "-SNAPSHOT" else ""
   project.configureAndroid()
   project.configurePublish()
 }
