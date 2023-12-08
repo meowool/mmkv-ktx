@@ -47,6 +47,7 @@ allprojects {
   version = rootProject.layout.projectDirectory
     .file("version.txt").asFile
     .readText()
+    .trim()
     .plus(if (isSnapshot) "-SNAPSHOT" else "")
 
   project.configureAndroid()
