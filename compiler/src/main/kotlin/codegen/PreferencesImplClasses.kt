@@ -26,6 +26,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.Modifier
+import com.meowool.mmkv.ktx.compiler.Names
 import com.meowool.mmkv.ktx.compiler.Names.BuiltInConverters
 import com.meowool.mmkv.ktx.compiler.Names.MMKV
 import com.meowool.mmkv.ktx.compiler.Names.MutableStateFlow
@@ -35,6 +36,7 @@ import com.meowool.mmkv.ktx.compiler.Names.Preferences
 import com.meowool.mmkv.ktx.compiler.Names.addInvisibleSuppress
 import com.meowool.mmkv.ktx.compiler.Names.defaultValue
 import com.meowool.mmkv.ktx.compiler.Names.isDefault
+import com.meowool.mmkv.ktx.compiler.Names.mapState
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.BYTE_ARRAY
@@ -47,13 +49,16 @@ import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LONG
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.SET
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.buildCodeBlock
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.LambdaTypeName.Companion.get as lambdaType
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy as by
 
 class PreferencesImplClasses(override val context: Context) : Codegen() {
@@ -142,6 +147,20 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
       })
       .build()
 
+    val mapStateFlowSpec = FunSpec.builder("mapStateFlow")
+      .addModifiers(KModifier.OVERRIDE)
+      .addTypeVariable(TypeVariableName("R"))
+      .addParameter(
+        name = "transform",
+        type = lambdaType(
+          parameters = arrayOf(preferences.toClassName()),
+          returnType = TypeVariableName("R")
+        )
+      )
+      .returns(Names.StateFlow.parameterizedBy(TypeVariableName("R")))
+      .addStatement("return·asStateFlow().%M(transform)", mapState)
+      .build()
+
     val mutableImplClassBuilder = TypeSpec.classBuilder(mutableImplClassName)
       .addModifiers(KModifier.INNER, KModifier.PRIVATE)
       .addSuperinterface(mutableClassName)
@@ -203,6 +222,7 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
       .addFunction(mutableFunSpec)
       .addFunction(updateFunSpec)
       .addFunction(asStateFlowFunSpec)
+      .addFunction(mapStateFlowSpec)
       .addType(mutableImplClassBuilder.build())
       .build()
 

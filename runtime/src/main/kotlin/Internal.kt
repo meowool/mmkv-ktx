@@ -21,6 +21,12 @@
 
 package com.meowool.mmkv.ktx
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import java.util.Set
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -53,4 +59,22 @@ internal inline fun isDefault(value: String?): Boolean {
 internal inline fun isDefault(value: Set<String>?): Boolean {
   contract { returns(false) implies (value != null) }
   return value == null
+}
+
+/**
+ * A lightweight operator that maps a [StateFlow] to another type of [StateFlow].
+ *
+ * [Fork source](https://github.com/Kotlin/kotlinx.coroutines/issues/2631#issuecomment-870565860)
+ */
+internal fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> {
+  val raw = this
+  val flow = this.map { transform(it) }
+  return object : StateFlow<R> {
+    override val value: R get() = transform(raw.value)
+    override val replayCache: List<R> get() = listOf(value)
+    override suspend fun collect(collector: FlowCollector<R>): Nothing {
+      // Does not produce the same value in a raw, so respect "distinct until changed emissions"
+      coroutineScope { flow.distinctUntilChanged().stateIn(this).collect(collector) }
+    }
+  }
 }

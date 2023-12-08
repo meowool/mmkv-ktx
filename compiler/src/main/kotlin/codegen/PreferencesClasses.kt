@@ -25,6 +25,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.LambdaTypeName.Companion.get as lambdaType
@@ -55,11 +56,25 @@ class PreferencesClasses(override val context: Context) : Codegen() {
       .returns(StateFlow.parameterizedBy(preferences.toClassName()))
       .build()
 
+    val mapStateFlowSpec = FunSpec.builder("mapStateFlow")
+      .addModifiers(KModifier.ABSTRACT)
+      .addTypeVariable(TypeVariableName("R"))
+      .addParameter(
+        name = "transform",
+        type = lambdaType(
+          parameters = arrayOf(preferences.toClassName()),
+          returnType = TypeVariableName("R")
+        )
+      )
+      .returns(StateFlow.parameterizedBy(TypeVariableName("R")))
+      .build()
+
     val classSpec = TypeSpec.interfaceBuilder(className)
       .addFunction(getSpec)
       .addFunction(mutableSpec)
       .addFunction(updateSpec)
       .addFunction(asStateFlowSpec)
+      .addFunction(mapStateFlowSpec)
       .build()
 
     val updateInlineSpec = FunSpec.builder("update")
