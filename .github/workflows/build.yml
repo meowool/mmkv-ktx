@@ -57,6 +57,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
