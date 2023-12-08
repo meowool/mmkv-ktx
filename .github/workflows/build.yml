@@ -66,3 +66,27 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: publish --stacktrace
+
+      - name: Bump project version
+        if: ${{ github.event.inputs.type == 'release' }}
+        run: |
+          # Install semver-tool
+          wget -O /usr/local/bin/semver \
+            https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver
+          chmod +x /usr/local/bin/semver
+
+          # Read current version
+          CURRENT_VERSION=$(cat version.txt)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Bump version
+          NEW_VERSION=$(semver bump patch $CURRENT_VERSION)
+          echo "New version: $NEW_VERSION"
+          echo $NEW_VERSION > version.txt
+
+          # Commit version
+          git config --local user.name "Meowool Robot"
+          git config --local user.email "meowool@proton.me"
+          git add version.txt
+          git commit -m "chore: prepare for next development iteration"
+          git push
