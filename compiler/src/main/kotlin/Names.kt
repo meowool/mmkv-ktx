@@ -37,9 +37,7 @@ object Names {
   val PersistDefaultValue = ClassName(PACKAGE, "PersistDefaultValue")
   val BuiltInConverters = ClassName(PACKAGE, "BuiltInConverters")
 
-  val isDefault = MemberName(PACKAGE, "isDefault")
   val mapState = MemberName(PACKAGE, "mapState")
-  fun defaultValue(primitive: String) = MemberName(PACKAGE, "default$primitive")
 
   fun AnnotationSpec.Builder.addInvisibleSuppress() =
     addMember("%S", "INVISIBLE_REFERENCE").addMember("%S", "INVISIBLE_MEMBER")

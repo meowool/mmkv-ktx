@@ -34,11 +34,11 @@ internal object BuiltInConverters {
   }
 
   fun decodeNullableInt(value: Long): Int? = when (value) {
-    Long.MAX_VALUE -> null
+    Long.MIN_VALUE -> null
     else -> value.toInt()
   }
 
-  fun encodeNullableInt(int: Int?): Long = int?.toLong() ?: Long.MAX_VALUE
+  fun encodeNullableInt(int: Int?): Long = int?.toLong() ?: Long.MIN_VALUE
 
   fun decodeNullableLong(bytes: ByteArray?): Long? =
     bytes?.let { ByteBuffer.wrap(it).getLong() }
@@ -50,15 +50,11 @@ internal object BuiltInConverters {
       .array()
   }
 
-  fun decodeNullableFloat(bytes: ByteArray?): Float? =
-    bytes?.let { ByteBuffer.wrap(it).getFloat() }
+  fun decodeNullableFloat(long: Long): Float? =
+    if (long == Long.MIN_VALUE) null else Float.fromBits(long.toInt())
 
-  fun encodeNullableFloat(value: Float?): ByteArray? = value?.let {
-    ByteBuffer
-      .allocate(Float.SIZE_BYTES)
-      .also { it.putFloat(value) }
-      .array()
-  }
+  fun encodeNullableFloat(value: Float?): Long =
+    value?.toRawBits()?.toLong() ?: Long.MIN_VALUE
 
   fun decodeNullableDouble(bytes: ByteArray?): Double? =
     bytes?.let { ByteBuffer.wrap(it).getDouble() }

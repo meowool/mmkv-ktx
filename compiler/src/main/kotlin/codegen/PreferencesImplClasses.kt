@@ -34,8 +34,6 @@ import com.meowool.mmkv.ktx.compiler.Names.Parcelable
 import com.meowool.mmkv.ktx.compiler.Names.PersistDefaultValue
 import com.meowool.mmkv.ktx.compiler.Names.Preferences
 import com.meowool.mmkv.ktx.compiler.Names.addInvisibleSuppress
-import com.meowool.mmkv.ktx.compiler.Names.defaultValue
-import com.meowool.mmkv.ktx.compiler.Names.isDefault
 import com.meowool.mmkv.ktx.compiler.Names.mapState
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.BOOLEAN
@@ -265,34 +263,21 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
         Modifier.ENUM in declaration.modifiers -> buildCodeBlock {
           addStatement("$name·=·run·{")
           indent()
-          addStatement("val·entries·=·%T.entries", declaration.toClassName())
+          addInitializationStatement(isPersistent, name, type, preferences, returnAdvanced = false)
           addStatement("val·ordinal·=·mmkv.decodeInt(%S,·-1)", name)
-          beginControlFlow("if·(ordinal·==·-1)")
-          if (isPersistent) addStatement(
-            "if·(default.$name·!=·null)·mmkv.encode(%S,·default.$name.ordinal)",
-            name
-          )
-          addStatement("return@run·default.$name")
-          endControlFlow()
-          addStatement("entries[ordinal]")
+          addStatement("if·(ordinal·==·-1)·default.$name")
+          addStatement("else %T.entries[ordinal]", declaration.toClassName())
           unindent()
           addStatement("},")
         }
         declaration.superTypes.contains(Parcelable) -> buildCodeBlock {
           addStatement("$name·=·run·{")
           indent()
+          addInitializationStatement(isPersistent, name, type, preferences)
           addStatement(
-            "val·value·=·mmkv.decodeParcelable(%S,·%T::class.java)",
+            "mmkv.decodeParcelable(%S,·%T::class.java)·?:·default.$name",
             name, declaration.toClassName()
           )
-          beginControlFlow("if·(value·==·null)")
-          if (isPersistent) {
-            if (type.resolve().isMarkedNullable) add("if·(default.$name·!=·null)·", name)
-            addEncodeStatement(name, type, preferences, "default.$name")
-          }
-          addStatement("return@run·default.$name")
-          endControlFlow()
-          addStatement("value")
           unindent()
           addStatement("},")
         }
@@ -304,15 +289,19 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
           }
 
           buildCodeBlock {
-            val defaultValue = defaultValue(typeConverter.encodeType)
             addStatement("$name·=·run·{")
             indent()
-            addStatement("val·value·=·mmkv.decode%L(%S,·%M)", typeConverter.encodeType, name, defaultValue)
-            beginControlFlow("if·(%M(value))", isDefault)
-            if (isPersistent) addEncodeStatement(name, type, preferences, "default.$name")
-            addStatement("return@run·default.$name")
-            endControlFlow()
-            addStatement("value.%M()", typeConverter.decoderName)
+            addInitializationStatement(isPersistent, name, type, preferences)
+            when (typeConverter.encodeType) {
+              "Bytes", "String", "StringSet" -> addStatement(
+                "mmkv.decode%L(%S)?.%M() ?: default.$name",
+                typeConverter.encodeType, name, typeConverter.decoderName
+              )
+              else -> addStatement(
+                "mmkv.decode%L(%S).%M()",
+                typeConverter.encodeType, name, typeConverter.decoderName
+              )
+            }
             unindent()
             addStatement("},")
           }
@@ -321,50 +310,53 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
       else -> buildCodeBlock {
         addStatement("$name·=·run·{")
         indent()
+        addInitializationStatement(isPersistent, name, type, preferences)
         when {
           primitive == "Bytes" || primitive == "String" || primitive == "StringSet" ->
-            addStatement("val·value·=·mmkv.decode%L(%S)", primitive, name)
+            addStatement("mmkv.decode%L(%S)·?:·default.$name", primitive, name)
 
           // See `BuiltInConverters.kt`
           resolvedType.isMarkedNullable -> when (primitive) {
             "Bool" -> addStatement(
-              "val·value·=·%T.decodeNullableBoolean(mmkv.decodeInt(%S,·-1))",
+              "%T.decodeNullableBoolean(mmkv.decodeInt(%S,·-1))",
               BuiltInConverters, name
             )
-            "Int" -> addStatement(
-              "val·value·=·%T.decodeNullableInt(mmkv.decodeLong(%S,·Long.MAX_VALUE))",
+            "Int", "Float" -> addStatement(
+              "%T.decodeNullable$primitive(mmkv.decodeLong(%S,·Long.MIN_VALUE))",
               BuiltInConverters, name
             )
             else -> addStatement(
-              "val·value·=·%T.decodeNullable%L(mmkv.decodeBytes(%S))",
+              "%T.decodeNullable%L(mmkv.decodeBytes(%S))",
               BuiltInConverters, primitive, name
             )
           }
 
-          else -> return@map buildCodeBlock {
-            val defaultValue = defaultValue(primitive)
-            addStatement("$name·=·run·{")
-            indent()
-            addStatement("val·value·=·mmkv.decode$primitive(%S,·%M)", name, defaultValue)
-            beginControlFlow("if·(%M(value))", isDefault)
-            if (isPersistent) {
-              add("if·(default.$name·!=·value)·")
-              addEncodeStatement(name, type, preferences, "default.$name")
-            }
-            addStatement("return@run·default.$name")
-            endControlFlow()
-            addStatement("value")
-            unindent()
-            addStatement("},")
-          }
+          else -> addStatement("mmkv.decode$primitive(%S,·default.$name)", name)
         }
-        beginControlFlow("if·(value == null)")
-        if (isPersistent) addEncodeStatement(name, type, preferences, "default.$name")
-        addStatement("return@run·default.$name")
-        endControlFlow()
-        addStatement("value")
         unindent()
         addStatement("},")
+      }
+    }
+  }
+
+  private fun CodeBlock.Builder.addInitializationStatement(
+    isPersistent: Boolean,
+    name: String,
+    type: KSTypeReference,
+    preferences: KSClassDeclaration,
+    returnAdvanced: Boolean = true,
+  ) {
+    if (isPersistent) {
+      add("if·(!mmkv.containsKey(%S))·", name)
+      if (returnAdvanced) {
+        addStatement("{")
+        indent()
+      }
+      addEncodeStatement(name, type, preferences, "default.$name")
+      if (returnAdvanced) {
+        addStatement("return@run·default.$name")
+        unindent()
+        addStatement("}")
       }
     }
   }
@@ -381,12 +373,12 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
     when {
       primitive != null && resolvedType.isMarkedNullable -> when (primitive) {
         "Bool" -> addStatement(
-          "mmkv.encode(%S, %T.encodeNullableBoolean($value))",
+          "mmkv.encode(%S,·%T.encodeNullableBoolean($value))",
           name, BuiltInConverters
         )
-        "Bytes", "String", "StringSet" -> addStatement("mmkv.encode(%S, $value)", name)
+        "Bytes", "String", "StringSet" -> addStatement("mmkv.encode(%S,·$value)", name)
         else -> addStatement(
-          "mmkv.encode(%S, %T.encodeNullable%L($value))",
+          "mmkv.encode(%S,·%T.encodeNullable%L($value))",
           name, BuiltInConverters, primitive
         )
       }
@@ -396,8 +388,8 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
 
       Modifier.ENUM in declaration.modifiers -> addStatement(
         when (resolvedType.isMarkedNullable) {
-          true -> "mmkv.encode(%S, $value?.ordinal ?: -1)"
-          false -> "mmkv.encode(%S, $value.ordinal)"
+          true -> "mmkv.encode(%S,·$value?.ordinal·?:·-1)"
+          false -> "mmkv.encode(%S,·$value.ordinal)"
         },
         name
       )
@@ -409,7 +401,7 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
             "consider replacing it with a supported one or creating a type converter."
         }
         addStatement(
-          "mmkv.encode(%S, $value.%M())",
+          "mmkv.encode(%S,·$value.%M())",
           name, typeConverter.encoderName,
         )
       }

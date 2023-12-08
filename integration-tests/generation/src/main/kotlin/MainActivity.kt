@@ -16,20 +16,20 @@
  * limitations under the License.
  */
 
-package com.meowool.mmkv.ktx.tests.model
+package com.meowool.mmkv.ktx.tests
 
-import com.meowool.mmkv.ktx.PersistDefaultValue
-import com.meowool.mmkv.ktx.Preferences
-import java.util.Date
+import android.app.Activity
+import android.os.Bundle
+import android.util.Log
+import com.meowool.codegen.PreferencesFactory
+import com.tencent.mmkv.MMKV
 
-@Preferences
-data class CustomData(
-  @PersistDefaultValue
-  val date: Date = Date(),
-  @PersistDefaultValue
-  val dateNullable: Date? = null,
-  @PersistDefaultValue
-  val list: List<Int> = emptyList(),
-  @PersistDefaultValue
-  val listNullable: List<Int>? = null,
-)
+class MainActivity : Activity() {
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    MMKV.initialize(this)
+    val preferences = PreferencesFactory()
+    val time = preferences.customData.get().date
+    Log.d("MainActivity", "time = ${time.time}")
+  }
+}

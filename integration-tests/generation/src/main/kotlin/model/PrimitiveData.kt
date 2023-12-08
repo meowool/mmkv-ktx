@@ -28,7 +28,7 @@ import android.os.Parcelable as AndroidParcelable
 @Preferences
 data class PrimitiveData(
   @PersistDefaultValue
-  val enum: Enum? = Enum.First,
+  val enum: Enum = Enum.First,
   @PersistDefaultValue
   val enumNullable: Enum? = null,
   @PersistDefaultValue
@@ -39,17 +39,29 @@ data class PrimitiveData(
   val bool: Boolean = false,
   @PersistDefaultValue
   val boolNullable: Boolean? = null,
+  @PersistDefaultValue
   val int: Int = 0,
+  @PersistDefaultValue
   val intNullable: Int? = null,
+  @PersistDefaultValue
   val long: Long = 0L,
+  @PersistDefaultValue
   val longNullable: Long? = null,
+  @PersistDefaultValue
   val double: Double = 0.0,
+  @PersistDefaultValue
   val doubleNullable: Double? = null,
+  @PersistDefaultValue
   val string: String = "",
+  @PersistDefaultValue
   val stringNullable: String? = null,
+  @PersistDefaultValue
   val bytes: ByteArray = ByteArray(0),
+  @PersistDefaultValue
   val bytesNullable: ByteArray? = null,
+  @PersistDefaultValue
   val set: Set<String> = emptySet(),
+  @PersistDefaultValue
   val setNullable: Set<String>? = null,
 ) {
   @Parcelize
