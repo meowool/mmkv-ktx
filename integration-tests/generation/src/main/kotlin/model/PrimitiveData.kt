@@ -18,24 +18,33 @@
 
 @file:Suppress("ArrayInDataClass")
 
-package com.meowool.mmkv.ktx.tests.data.model
+package com.meowool.mmkv.ktx.tests.model
 
+import com.meowool.mmkv.ktx.PersistDefaultValue
 import com.meowool.mmkv.ktx.Preferences
 import kotlinx.parcelize.Parcelize
 import android.os.Parcelable as AndroidParcelable
 
 @Preferences
 data class PrimitiveData(
+  @PersistDefaultValue
   val enum: Enum? = Enum.First,
+  @PersistDefaultValue
   val enumNullable: Enum? = null,
+  @PersistDefaultValue
   val parcelable: Parcelable = Parcelable(""),
+  @PersistDefaultValue
   val parcelableNullable: Parcelable? = null,
+  @PersistDefaultValue
   val bool: Boolean = false,
+  @PersistDefaultValue
   val boolNullable: Boolean? = null,
   val int: Int = 0,
   val intNullable: Int? = null,
   val long: Long = 0L,
   val longNullable: Long? = null,
+  val double: Double = 0.0,
+  val doubleNullable: Double? = null,
   val string: String = "",
   val stringNullable: String? = null,
   val bytes: ByteArray = ByteArray(0),

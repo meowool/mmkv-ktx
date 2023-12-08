@@ -22,6 +22,7 @@ package com.meowool.mmkv.ktx.compiler
 
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.MemberName
 
 object Names {
   private const val PACKAGE = "com.meowool.mmkv.ktx"
@@ -33,7 +34,11 @@ object Names {
 
   val Preferences = ClassName(PACKAGE, "Preferences")
   val TypeConverters = ClassName(PACKAGE, "TypeConverters")
+  val PersistDefaultValue = ClassName(PACKAGE, "PersistDefaultValue")
   val BuiltInConverters = ClassName(PACKAGE, "BuiltInConverters")
+
+  val isDefault = MemberName(PACKAGE, "isDefault")
+  fun defaultValue(primitive: String) = MemberName(PACKAGE, "default$primitive")
 
   fun AnnotationSpec.Builder.addInvisibleSuppress() =
     addMember("%S", "INVISIBLE_REFERENCE").addMember("%S", "INVISIBLE_MEMBER")

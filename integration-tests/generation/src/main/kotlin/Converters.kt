@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package com.meowool.mmkv.ktx.tests.data
+package com.meowool.mmkv.ktx.tests
 
 import com.meowool.mmkv.ktx.TypeConverters
+import java.nio.ByteBuffer
 import java.util.Date
 
 @TypeConverters
@@ -27,4 +28,17 @@ object Converters {
   fun Long.toDate(): Date = Date(this)
   fun Date?.toLongNullable(): Long = this?.time ?: -1
   fun Long.toDateNullable(): Date? = if (this == -1L) null else Date(this)
+
+  fun List<Int>.toBytes(): ByteArray = ByteBuffer.allocate(size * 4).apply {
+    forEach { putInt(it) }
+  }.array()
+
+  fun ByteArray.toInts(): List<Int> = ByteBuffer.wrap(this).let { buffer ->
+    val list = mutableListOf<Int>()
+    while (buffer.hasRemaining()) list.add(buffer.int)
+    list
+  }
+
+  fun List<Int>?.toBytesNullable(): ByteArray? = this?.toBytes()
+  fun ByteArray?.toIntsNullable(): List<Int>? = this?.toInts()
 }

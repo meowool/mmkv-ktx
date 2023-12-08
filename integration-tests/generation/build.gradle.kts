@@ -30,6 +30,14 @@ android {
 dependencies {
   implementation(projects.runtime)
   ksp(projects.compiler)
+  arrayOf(
+    libs.kotlin.test,
+    libs.androidx.test,
+    libs.androidx.test.rules,
+    libs.androidx.test.junit,
+    libs.assertj,
+    libs.assertk,
+  ).forEach(::androidTestImplementation)
 }
 
 ksp.arg("mmkv.ktx.packageName", "$group.codegen")

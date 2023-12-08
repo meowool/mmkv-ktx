@@ -30,11 +30,15 @@ import com.meowool.mmkv.ktx.compiler.Names.BuiltInConverters
 import com.meowool.mmkv.ktx.compiler.Names.MMKV
 import com.meowool.mmkv.ktx.compiler.Names.MutableStateFlow
 import com.meowool.mmkv.ktx.compiler.Names.Parcelable
+import com.meowool.mmkv.ktx.compiler.Names.PersistDefaultValue
 import com.meowool.mmkv.ktx.compiler.Names.Preferences
 import com.meowool.mmkv.ktx.compiler.Names.addInvisibleSuppress
+import com.meowool.mmkv.ktx.compiler.Names.defaultValue
+import com.meowool.mmkv.ktx.compiler.Names.isDefault
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.BYTE_ARRAY
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.DOUBLE
 import com.squareup.kotlinpoet.FLOAT
 import com.squareup.kotlinpoet.FileSpec
@@ -100,7 +104,7 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
         addStatement("if (instance != null) return instance\n")
         addStatement("%T(", dataClassName)
         indent()
-        preferences.mapAssignments()?.forEach(::add)
+        preferences.mapDecodeAssignments()?.forEach(::add)
         unindent()
         addStatement(").also·{·%N·=·it·}", instancePropertySpec)
         endControlFlow()
@@ -116,7 +120,9 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
     val updateFunSpec = FunSpec.builder("update")
       .addModifiers(KModifier.OVERRIDE)
       .addParameter("mutable", mutableClassName)
-      .addStatement("%N?.value = mutable.toImmutable()", statePropertySpec)
+      .addStatement("val new = mutable.toImmutable()")
+      .addStatement("%N?.value = new", statePropertySpec)
+      .addStatement("synchronized(this) { %N = new }", instancePropertySpec)
       .build()
 
     val asStateFlowFunSpec = FunSpec.builder("asStateFlow")
@@ -166,9 +172,6 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
     preferences.primaryConstructor?.parameters?.forEach { parameter ->
       val name = requireNotNull(parameter.name?.asString())
       val type = parameter.type
-      val resolvedType = type.resolve()
-      val declaration = requireNotNull(resolvedType.findActualDeclaration())
-      val primitive = resolveMMKVType(type, declaration)
 
       mutableImplClassBuilder.addProperty(
         PropertySpec.builder(name, type.toTypeName())
@@ -179,42 +182,7 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
               .addParameter("new", type.toTypeName())
               .addCode(buildCodeBlock {
                 addStatement("field = new")
-                when {
-                  primitive != null && resolvedType.isMarkedNullable -> when (primitive) {
-                    "Bool" -> addStatement(
-                      "mmkv.encode(%S, %T.encodeNullableBoolean(new))",
-                      name, BuiltInConverters
-                    )
-                    "Bytes", "String", "StringSet" -> addStatement("mmkv.encode(%S, new)", name)
-                    else -> addStatement(
-                      "mmkv.encode(%S, %T.encodeNullable%L(new))",
-                      name, BuiltInConverters, primitive
-                    )
-                  }
-
-                  primitive != null || declaration.superTypes.contains(Parcelable) ->
-                    addStatement("%N.encode(%S, new)", mmkvPropertySpec, name)
-
-                  Modifier.ENUM in declaration.modifiers -> addStatement(
-                    when (resolvedType.isMarkedNullable) {
-                      true -> "%N.encode(%S, new?.ordinal ?: -1)"
-                      false -> "%N.encode(%S, new.ordinal)"
-                    },
-                    mmkvPropertySpec, name
-                  )
-
-                  else -> {
-                    val typeConverter = requireNotNull(resolvedType.findTypeConverter(declaration)) {
-                      "[${preferences.logName()}] " +
-                        "Unsupported type '${type.logName()}' for property '$name', " +
-                        "consider replacing it with a supported one or creating a type converter."
-                    }
-                    addStatement(
-                      "%N.encode(%S, new.%M())",
-                      mmkvPropertySpec, name, typeConverter.encoderName,
-                    )
-                  }
-                }
+                addEncodeStatement(name, type, preferences, "new")
               })
               .build()
           )
@@ -250,8 +218,20 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
       .write(preferences)
   }
 
-  private fun KSClassDeclaration.mapAssignments() = primaryConstructor?.parameters?.map {
+  private fun KSClassDeclaration.mapDecodeAssignments() = primaryConstructor?.parameters?.map {
+    require(!it.isVararg) {
+      "[${this.logName()}] " +
+        "Vararg is not supported for property '${it.name?.asString()}', " +
+        "consider replacing it with a supported one."
+    }
+    require(it.hasDefault) {
+      "[${this.logName()}] " +
+        "Property '${it.name?.asString()}' must have a default value, " +
+        "consider adding an initial value to it."
+    }
+    val preferences = this
     val name = requireNotNull(it.name?.asString())
+    val isPersistent = it.findAnnotation(PersistDefaultValue) != null
     val type = it.type
     val resolvedType = type.resolve()
     val declaration = requireNotNull(resolvedType.findActualDeclaration()) {
@@ -266,17 +246,35 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
           addStatement("$name·=·run·{")
           indent()
           addStatement("val·entries·=·%T.entries", declaration.toClassName())
-          addStatement("val·ordinal·=·mmkv.decodeInt(%S, -1)", name)
-          addStatement("if·(ordinal == -1)·return@run·default.$name")
+          addStatement("val·ordinal·=·mmkv.decodeInt(%S,·-1)", name)
+          beginControlFlow("if·(ordinal·==·-1)")
+          if (isPersistent) addStatement(
+            "if·(default.$name·!=·null)·mmkv.encode(%S,·default.$name.ordinal)",
+            name
+          )
+          addStatement("return@run·default.$name")
+          endControlFlow()
           addStatement("entries[ordinal]")
           unindent()
           addStatement("},")
         }
         declaration.superTypes.contains(Parcelable) -> buildCodeBlock {
+          addStatement("$name·=·run·{")
+          indent()
           addStatement(
-            "$name·=·mmkv.decodeParcelable(%S,·%T::class.java)·?:·default.$name,",
+            "val·value·=·mmkv.decodeParcelable(%S,·%T::class.java)",
             name, declaration.toClassName()
           )
+          beginControlFlow("if·(value·==·null)")
+          if (isPersistent) {
+            if (type.resolve().isMarkedNullable) add("if·(default.$name·!=·null)·", name)
+            addEncodeStatement(name, type, preferences, "default.$name")
+          }
+          addStatement("return@run·default.$name")
+          endControlFlow()
+          addStatement("value")
+          unindent()
+          addStatement("},")
         }
         else -> {
           val typeConverter = requireNotNull(resolvedType.findTypeConverter(this)) {
@@ -286,47 +284,14 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
           }
 
           buildCodeBlock {
+            val defaultValue = defaultValue(typeConverter.encodeType)
             addStatement("$name·=·run·{")
             indent()
-            when (typeConverter.encodeType) {
-              "Bool" -> {
-                addStatement("val·value·=·mmkv.decodeBool(%S,·false)", name)
-                addStatement("if·(!value)·return@run·default.$name")
-              }
-              "Int" -> {
-                addStatement("val·value·=·mmkv.decodeInt(%S,·-1)", name)
-                addStatement("if·(value == -1)·return@run·default.$name")
-              }
-              "Long" -> {
-                addStatement("val·value·=·mmkv.decodeLong(%S,·-1)", name)
-                addStatement("if·(value == -1L)·return@run·default.$name")
-              }
-              "Float" -> {
-                addStatement("val·value·=·mmkv.decodeFloat(%S,·Float.NaN)", name)
-                addStatement("if·(value.isNaN())·return@run·default.$name")
-              }
-              "Double" -> {
-                addStatement("val·value·=·mmkv.decodeDouble(%S,·Double.NaN)", name)
-                addStatement("if·(value.isNaN())·return@run·default.$name")
-              }
-              "Bytes" -> {
-                addStatement("val·value·=·mmkv.decodeBytes(%S)", name)
-                addStatement("if·(value == null)·return@run·default.$name")
-              }
-              "String" -> {
-                addStatement("val·value·=·mmkv.decodeString(%S)", name)
-                addStatement("if·(value == null)·return@run·default.$name")
-              }
-              "StringSet" -> {
-                addStatement("val·value·=·mmkv.decodeStringSet(%S)", name)
-                addStatement("if·(value == null)·return@run·default.$name")
-              }
-              else -> error(
-                "[${typeConverter.encoder.logName()}] " +
-                  "Unsupported type '${typeConverter.encodeType}' for property '$name', " +
-                  "consider replacing it with a supported one."
-              )
-            }
+            addStatement("val·value·=·mmkv.decode%L(%S,·%M)", typeConverter.encodeType, name, defaultValue)
+            beginControlFlow("if·(%M(value))", isDefault)
+            if (isPersistent) addEncodeStatement(name, type, preferences, "default.$name")
+            addStatement("return@run·default.$name")
+            endControlFlow()
             addStatement("value.%M()", typeConverter.decoderName)
             unindent()
             addStatement("},")
@@ -334,27 +299,99 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
         }
       }
       else -> buildCodeBlock {
+        addStatement("$name·=·run·{")
+        indent()
         when {
           primitive == "Bytes" || primitive == "String" || primitive == "StringSet" ->
-            addStatement("$name·=·mmkv.decode%L(%S)·?:·default.$name,", primitive, name)
+            addStatement("val·value·=·mmkv.decode%L(%S)", primitive, name)
 
+          // See `BuiltInConverters.kt`
           resolvedType.isMarkedNullable -> when (primitive) {
             "Bool" -> addStatement(
-              "$name·=·%T.decodeNullableBoolean(mmkv.decodeInt(%S,·-1))·?:·default.$name,",
+              "val·value·=·%T.decodeNullableBoolean(mmkv.decodeInt(%S,·-1))",
               BuiltInConverters, name
             )
             "Int" -> addStatement(
-              "$name·=·%T.decodeNullableInt(mmkv.decodeLong(%S,·Long.MAX_VALUE))·?:·default.$name,",
+              "val·value·=·%T.decodeNullableInt(mmkv.decodeLong(%S,·Long.MAX_VALUE))",
               BuiltInConverters, name
             )
             else -> addStatement(
-              "$name·=·%T.decodeNullable%L(mmkv.decodeBytes(%S))·?:·default.$name,",
+              "val·value·=·%T.decodeNullable%L(mmkv.decodeBytes(%S))",
               BuiltInConverters, primitive, name
             )
           }
 
-          else -> addStatement("$name·=·mmkv.decode$primitive(%S,·default.$name),", name)
+          else -> return@map buildCodeBlock {
+            val defaultValue = defaultValue(primitive)
+            addStatement("$name·=·run·{")
+            indent()
+            addStatement("val·value·=·mmkv.decode$primitive(%S,·%M)", name, defaultValue)
+            beginControlFlow("if·(%M(value))", isDefault)
+            if (isPersistent) {
+              add("if·(default.$name·!=·value)·")
+              addEncodeStatement(name, type, preferences, "default.$name")
+            }
+            addStatement("return@run·default.$name")
+            endControlFlow()
+            addStatement("value")
+            unindent()
+            addStatement("},")
+          }
         }
+        beginControlFlow("if·(value == null)")
+        if (isPersistent) addEncodeStatement(name, type, preferences, "default.$name")
+        addStatement("return@run·default.$name")
+        endControlFlow()
+        addStatement("value")
+        unindent()
+        addStatement("},")
+      }
+    }
+  }
+
+  private fun CodeBlock.Builder.addEncodeStatement(
+    name: String,
+    type: KSTypeReference,
+    preferences: KSClassDeclaration,
+    value: String,
+  ) {
+    val resolvedType = type.resolve()
+    val declaration = requireNotNull(resolvedType.findActualDeclaration())
+    val primitive = resolveMMKVType(type, declaration)
+    when {
+      primitive != null && resolvedType.isMarkedNullable -> when (primitive) {
+        "Bool" -> addStatement(
+          "mmkv.encode(%S, %T.encodeNullableBoolean($value))",
+          name, BuiltInConverters
+        )
+        "Bytes", "String", "StringSet" -> addStatement("mmkv.encode(%S, $value)", name)
+        else -> addStatement(
+          "mmkv.encode(%S, %T.encodeNullable%L($value))",
+          name, BuiltInConverters, primitive
+        )
+      }
+
+      primitive != null || declaration.superTypes.contains(Parcelable) ->
+        addStatement("mmkv.encode(%S, $value)", name)
+
+      Modifier.ENUM in declaration.modifiers -> addStatement(
+        when (resolvedType.isMarkedNullable) {
+          true -> "mmkv.encode(%S, $value?.ordinal ?: -1)"
+          false -> "mmkv.encode(%S, $value.ordinal)"
+        },
+        name
+      )
+
+      else -> {
+        val typeConverter = requireNotNull(resolvedType.findTypeConverter(declaration)) {
+          "[${preferences.logName()}] " +
+            "Unsupported type '${type.logName()}' for property '$name', " +
+            "consider replacing it with a supported one or creating a type converter."
+        }
+        addStatement(
+          "mmkv.encode(%S, $value.%M())",
+          name, typeConverter.encoderName,
+        )
       }
     }
   }
