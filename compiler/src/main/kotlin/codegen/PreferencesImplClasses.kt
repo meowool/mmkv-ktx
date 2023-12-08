@@ -407,7 +407,10 @@ class PreferencesImplClasses(override val context: Context) : Codegen() {
         "'${encoder.logName()}', consider replacing it with a supported one."
     }
 
-    require(encoder.returnType?.resolve()?.isMarkedNullable == false) {
+    require(
+      encoder.returnType?.resolve()?.isMarkedNullable == false ||
+        encodeType == "Bytes" || encodeType == "String" || encodeType == "StringSet"
+    ) {
       "[${original.logName()}] " +
         "The return type of the type converter '${encoder.logName()}' " +
         "must not be nullable, consider replacing it with a supported one."
