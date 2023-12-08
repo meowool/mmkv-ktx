@@ -39,7 +39,7 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 ## Testing
 robolectric = "org.robolectric:robolectric:4.11.1"
-assertk = "com.willowtreeapps.assertk:assertk:0.27.0"
+assertk = "com.willowtreeapps.assertk:assertk:0.28.0"
 assertj = "org.assertj:assertj-core:3.24.2"
 
 [plugins]
