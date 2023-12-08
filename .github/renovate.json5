@@ -40,13 +40,14 @@
       automerge: true,
     },
     {
-      // Group Kotlin dependencies together
+      // Group Kotlin-related dependencies together
       matchPackagePrefixes: [
         'org.jetbrains.kotlin',
         'org.jetbrains.kotlinx',
         'com.google.devtools.ksp',
+        'androidx.compose.compiler',
       ],
-      groupName: 'kotlin dependencies',
+      groupName: 'kotlin-related dependencies',
       automerge: true,
     },
   ],
