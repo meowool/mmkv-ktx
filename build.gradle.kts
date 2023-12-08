@@ -55,7 +55,7 @@ allprojects {
 }
 
 fun Project.configureAndroid() = plugins.withType<BasePlugin> {
-  (extensions["android"] as CommonExtension<*, *, *, *, *>).apply {
+  (extensions["android"] as CommonExtension<*, *, *, *, *, *>).apply {
     compileSdk = 34
     testOptions.unitTests.isIncludeAndroidResources = true
     defaultConfig {
