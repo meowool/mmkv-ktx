@@ -1,6 +1,6 @@
 # MMKV-KTX
 
-MMKV-KTX is a library that can help you observe the latest values of MMKV with Kotlin Flow.
+MMKV-KTX is an extension of **[MMKV](https://github.com/Tencent/MMKV)** that provides another way to use key-value storage in Kotlin. It is highly integrated with Kotlin language features, and also supports receiving data in real-time with [StateFlow](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow), This makes it easier for you to listen to the latest values in Jetpack Compose.
 
 ## Usage:
 
