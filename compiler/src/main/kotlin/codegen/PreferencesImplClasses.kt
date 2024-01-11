@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
+ * Copyright (C) 2024 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
  *
  * This file is part of the MMKV-KTX project <https://github.com/meowool/mmkv-ktx>.
  *
@@ -59,8 +59,8 @@ import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.LambdaTypeName.Companion.get as lambdaType
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy as by
 
-class PreferencesImplClasses(override val context: Context) : Codegen() {
-  override fun generate() = context.preferences.forEach(::generatePreferences)
+class PreferencesImplClasses : CodegenStep() {
+  override fun generate() = context.preferences.process(::generatePreferences)
 
   private fun generatePreferences(preferences: KSClassDeclaration) {
     val dataClassName = preferences.toClassName()

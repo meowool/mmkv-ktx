@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
+ * Copyright (C) 2024 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
  *
  * This file is part of the MMKV-KTX project <https://github.com/meowool/mmkv-ktx>.
  *
@@ -27,13 +27,13 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
-open class FactoryClass(override val context: Context) : Codegen() {
+open class FactoryClass : CodegenStep() {
   override fun generate() {
     val className = context.factoryClassName
     val classBuilder = TypeSpec.interfaceBuilder(className)
-    val preferences = context.preferences.toList()
+    val preferences = context.preferences
 
-    preferences.forEach {
+    preferences.process {
       val propertySpec = PropertySpec.builder(
         name = it.preferencesName(),
         type = context.preferencesClassName(it),

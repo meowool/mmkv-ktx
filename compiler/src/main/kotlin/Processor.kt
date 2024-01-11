@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
+ * Copyright (C) 2024 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
  *
  * This file is part of the MMKV-KTX project <https://github.com/meowool/mmkv-ktx>.
  *
@@ -31,7 +31,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.Modifier
 import com.meowool.mmkv.ktx.compiler.Names.Preferences
 import com.meowool.mmkv.ktx.compiler.Names.TypeConverters
-import com.meowool.mmkv.ktx.compiler.codegen.Codegen
+import com.meowool.mmkv.ktx.compiler.codegen.CodegenStep
 import com.meowool.mmkv.ktx.compiler.codegen.FactoryClass
 import com.meowool.mmkv.ktx.compiler.codegen.FactoryImplClass
 import com.meowool.mmkv.ktx.compiler.codegen.MutableClasses
@@ -43,8 +43,17 @@ class Processor(
   private val codeGenerator: CodeGenerator,
   private val packageName: String,
 ) : SymbolProcessor {
+  // The steps that need to be deferred to the next round due to errors during processing
+  private val deferredSteps = mutableListOf(
+    MutableClasses(),
+    FactoryClass(),
+    PreferencesClasses(),
+    FactoryImplClass(),
+    PreferencesImplClasses(),
+  )
+
   override fun process(resolver: Resolver): List<KSAnnotated> {
-    val context = Codegen.Context(
+    val context = CodegenStep.Context(
       preferences = resolver.filterPreferences(),
       typeConverters = resolver.filterTypeConverters(),
       logger = logger,
@@ -52,20 +61,23 @@ class Processor(
       packageName = packageName,
     )
 
-    if (context.preferences.isEmpty() && context.typeConverters.isEmpty()) {
-      logger.info("No @Preferences or @TypeConverters found.")
+    if (context.preferences.isEmpty()) {
+      logger.info("No @Preferences found.")
       return emptyList()
     }
 
-    arrayOf(
-      MutableClasses(context),
-      FactoryClass(context),
-      PreferencesClasses(context),
-      FactoryImplClass(context),
-      PreferencesImplClasses(context),
-    ).forEach(Codegen::start)
+    return deferredSteps.toList().flatMap {
+      val deferredNodes = it.start(context)
+      // If this step does not have any nodes that need to be deferred to the
+      // next round of processing, it means it is complete.
+      if (deferredNodes.isEmpty()) deferredSteps.remove(it)
+      deferredNodes
+    }.distinct()
+  }
 
-    return emptyList()
+  override fun finish() {
+    super.finish()
+    deferredSteps.forEach { it.reportException() }
   }
 
   private fun Resolver.filterPreferences(): List<KSClassDeclaration> =
