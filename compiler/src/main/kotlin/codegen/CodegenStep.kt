@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
+ * Copyright (C) 2024 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
  *
  * This file is part of the MMKV-KTX project <https://github.com/meowool/mmkv-ktx>.
  *
@@ -39,16 +39,40 @@ import com.squareup.kotlinpoet.ksp.kspDependencies
 import com.squareup.kotlinpoet.ksp.originatingKSFiles
 import java.util.Locale
 
-abstract class Codegen {
-  abstract val context: Context
-  abstract fun generate()
+abstract class CodegenStep {
+  private var recordedExceptions = mutableSetOf<Throwable>()
+  private val deferredNodes = mutableListOf<KSAnnotated>()
+
+  protected lateinit var context: Context
+
+  protected abstract fun generate()
+
+  fun start(context: Context): List<KSAnnotated> {
+    this.context = context
+    // Every time we start a new round, we need to clear the exception nodes of the
+    // previous round, because we don't need them anymore.
+    deferredNodes.clear()
+    generate()
+    // We return the new deferred nodes so that they can be processed in the next round
+    // of symbol processing.
+    return deferredNodes
+  }
+
+  fun reportException() = recordedExceptions
+    .distinctBy { it.message }
+    .forEach { context.logger.exception(it) }
 
   open fun String.fixGeneratedCode() = this
 
-  fun start() = try {
-    generate()
-  } catch (e: Exception) {
-    context.logger.exception(e)
+  protected fun List<KSClassDeclaration>.process(generate: (KSClassDeclaration) -> Unit) = forEach {
+    try {
+      generate(it)
+    } catch (e: Throwable) {
+      // Record it if this symbol processing fails, so that it can be deferred to
+      // the next round of symbol processing.
+      recordedExceptions.add(e)
+      deferredNodes.add(it)
+    }
   }
 
   fun KSFunctionDeclaration.toMemberName() = MemberName(
@@ -135,7 +159,11 @@ abstract class Codegen {
 
   @JvmName("writeWithFiles")
   fun FileSpec.write(originatingKSFiles: Iterable<KSFile> = originatingKSFiles()) {
-    val dependencies = kspDependencies(aggregating = true, originatingKSFiles)
+    val dependencies = kspDependencies(
+      aggregating = true,
+      // We need the source file of the converter anyway, because we always depend on them.
+      originatingKSFiles = originatingKSFiles + context.typeConverters.mapNotNull { it.containingFile }
+    )
     val source = this.toString().fixGeneratedCode().replace("`get`()", "get()")
 
     context.codeGenerator

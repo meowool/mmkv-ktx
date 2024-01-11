@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
+ * Copyright (C) 2024 Meowool <https://github.com/meowool/mmkv-ktx/graphs/contributors>
  *
  * This file is part of the MMKV-KTX project <https://github.com/meowool/mmkv-ktx>.
  *
@@ -24,16 +24,16 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
-class FactoryImplClass(context: Context) : FactoryClass(context) {
+class FactoryImplClass : FactoryClass() {
   override fun generate() {
     val className = context.factoryImplClassName
     val classBuilder = TypeSpec.classBuilder(className)
       .addModifiers(KModifier.INTERNAL)
       .addSuperinterface(context.factoryClassName)
       .addAnnotation(PublishedApi::class)
-    val preferences = context.preferences.toList()
+    val preferences = context.preferences
 
-    preferences.forEach {
+    preferences.process {
       val propertyName = it.preferencesName()
       val type = context.preferencesClassName(it)
       val typeNullable = type.copy(nullable = true)
