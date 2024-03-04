@@ -6,7 +6,73 @@ MMKV-KTX is an extension of [**MMKV**](https://github.com/Tencent/MMKV) that pro
 
 ## Usage
 
-TODO
+```kotlin
+@TypeConverters
+class Converters {
+  fun UUID.toBytes(): ByteArray = ByteBuffer.allocate(16).apply {
+    putLong(mostSignificantBits)
+    putLong(leastSignificantBits)
+  }.array()
+  
+  fun ByteArray.toUUID(): UUID = with(ByteBuffer.wrap(this)) {
+    UUID(long, long)
+  }
+}
+
+########################
+
+enum class ThemeAppearance {
+  Light, Dark, Auto,
+}
+
+@Immutable // If used in Jetpack Compose
+@Preferences
+data class GeneralSettings(
+  val themeAppearance: ThemeAppearance = ThemeAppearance.Auto,
+  val customToken: String? = null,
+  val checkUpdates: Boolean = true,
+)
+
+@Immutable // If used in Jetpack Compose
+@Preferences
+data class GlobalData(
+  @PersistDefaultValue // If needed
+  val lastUser: UUID = UUID.randomUUID(),
+  val isLoggedIn: Boolean = true,
+)
+
+########################
+
+// Declare top-level static instance or inject a singleton with the DI framework (Hilt)
+val preferences: PreferencesFactory = PreferencesFactory()
+
+@Composable
+fun App() {
+  val systemInDark = isSystemInDarkTheme()
+  val usesDark = preferences.generalSettings.mapStateFlow {
+    when (it.themeAppearance) {
+      Light -> false
+      Dark -> true
+      Auto -> systemInDark
+    }
+  }.collectAsStateWithLifecycle()
+  
+  ...
+}
+
+########################
+
+class SettingsViewModel(private val preferences: PreferencesFactory) : ViewModel() {
+  val generalSettings = preferences.generalSettings.asStateFlow()
+  
+  fun saveToken(value: String) {
+    checkToken(value) { ... }
+    preferences.generalSettings.update {
+      it.customToken = value
+    }
+  }
+}
+```
 
 ## Setup
 
