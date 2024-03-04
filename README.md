@@ -128,6 +128,14 @@ dependencies {
 ```
 </details>
 
+Finally, set the ksp parameter in `build.gradle.kts`
+
+`build.gradle.ktx (app)`
+
+```
+ksp.arg("mmkv.ktx.packageName", "$group.codegen")
+```
+
 MMKV-KTX is published on **Maven Central**, so if you haven't defined the repository yet, please do it:
 ```kotlin
 repositories {
