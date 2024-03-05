@@ -185,7 +185,7 @@ fun resetUserSettings() = preferences.userSettings.update {
 
 Sometimes you may also want to be able to get the latest value in real time. MMKV-KTX provides `kotlinx.flow` conversion to make things incredibly easy.
 
-To instantly update whenever the data changes, you can use the **`asStateFlow`** function to convert preferences into a hot flow (**StateFlow**) that you are familiar with (assuming you often use **Kotlin Flow**).
+To instantly react whenever the data changes, you can use the **`asStateFlow`** function to convert preferences into a hot flow (**StateFlow**) that you are familiar with (assuming you often use **Kotlin Flow**).
 
 ```kotlin
 val userSettings: StateFlow<UserSettings> = preferences.userSettings.asStateFlow()
