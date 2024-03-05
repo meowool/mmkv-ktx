@@ -26,7 +26,7 @@ MMKV-KTX is an extension of [**MMKV**](https://github.com/Tencent/MMKV) designed
 
 ## Getting Started
 
-#### Apply KSP Plugin
+### Apply KSP Plugin
 
 MMKV-KTX relies on compile-time code generation, so please make sure that KSP is [enabled in your module's `build.gradle.kts`](https://kotlinlang.org/docs/ksp-quickstart.html#use-your-own-processor-in-a-project):
 
@@ -40,7 +40,7 @@ plugins {
 >
 > Select a [KSP version](https://github.com/google/ksp/releases) compatible with your Kotlin version.
 
-#### Configure KSP Argument
+### Configure KSP Argument
 
 Specify the package name for the generated code in your `build.gradle.kts`:
 
@@ -48,7 +48,7 @@ Specify the package name for the generated code in your `build.gradle.kts`:
 ksp.arg("mmkv.ktx.packageName", "<your_package>") // Replace it with your desired package, e.g. 'com.meowool.myapp.codegen'
 ```
 
-#### Import Dependencies
+### Import Dependencies
 
 Depending on your project setup, follow the appropriate steps to include MMKV-KTX in your project.
 
@@ -101,9 +101,9 @@ repositories {
 
 MMKV-KTX greatly simplifies the usage of key-value storage in Kotlin. As a result, you can almost immediately understand how to use it just by looking at the following example.
 
-#### Initialization
+### Initialization
 
-Before starting, please make sure you have initialized the [MMKV](https://github.com/Tencent/MMKV#quick-tutorial) instance. If not, initialize it anywhere that can access the Context, such as in the Application:
+Before starting, please make sure you have initialized the [MMKV](https://github.com/Tencent/MMKV#quick-tutorial) instance. If not, initialize it anywhere that can access the `Context`, such as in the `Application`:
 
 ```kotlin
 class YourApplication : Application() {
@@ -114,7 +114,7 @@ class YourApplication : Application() {
 }
 ```
 
-#### Declaring Data and Converters
+### Declaring Data and Converters
 
 Use annotations to define your preferences:
 
@@ -166,7 +166,7 @@ class Converters {
 
 This setup allows you to freely convert custom types, ensuring that the MMKV-KTX compiler can handle a wide range of data types without built-in support.
 
-#### Reading and Writing Preferences
+### Reading and Writing Preferences
 
 All preference instances are encapsulated within the `PreferencesFactory` object, making it the central point for operations. In the example provided above, we can access the `PreferencesFactory.userSettings` and `PreferencesFactory.globalData` properties by instantiating a `PreferencesFactory` object.
 
@@ -192,7 +192,7 @@ fun resetUserSettings() = preferences.userSettings.update {
 }
 ```
 
-#### Reactive Support (Kotlin Flow)
+### Reactive Support (Kotlin Flow)
 
 Sometimes you may also want to be able to get the latest value in real time. MMKV-KTX provides `kotlinx.flow` conversion to make things incredibly easy.
 
@@ -220,7 +220,7 @@ val notifications: StateFlow<NotificationsController?> = preferences.userSetting
 
 In case you are interested in other usage methods, here are some common uses listed here.
 
-#### Integrated with ViewModel and Hilt
+### Integrated with ViewModel and Hilt
 
 ```kotlin
 import dagger.Module
@@ -268,7 +268,7 @@ class SettingsViewModel(
 }
 ```
 
-#### Integrated with Jetpack Compose
+### Integrated with Jetpack Compose
 
 In the world of **Jetpack Compose**, there's nothing particularly special about using it, just for your reference:
 
