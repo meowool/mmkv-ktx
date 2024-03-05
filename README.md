@@ -101,6 +101,18 @@ repositories {
 
 MMKV-KTX greatly simplifies the usage of key-value storage in Kotlin. As a result, you can almost immediately understand how to use it just by looking at the following example.
 
+#### Initialization
+
+Before using it, you need to initialize the MMKV instance.
+
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+  super.onCreate(savedInstanceState) {
+    MMKV.initialize(this)
+  }
+}
+```
+
 #### Declaring Data and Converters
 
 Use annotations to define your preferences:
