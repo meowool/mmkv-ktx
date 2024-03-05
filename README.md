@@ -126,9 +126,7 @@ data class GlobalData(
   val isLoggedIn: Boolean = true,
 )
 
-enum class ThemeAppearance {
-  Light, Dark, Auto,
-}
+enum class ThemeAppearance { Light, Dark, Auto }
 ```
 
 In this example, we have data of primitive types, enum types, and `UUID`. While the MMKV-KTX compiler supports most types by default, allowing for an out-of-the-box experience, using unsupported types (like `UUID` in our example) requires custom converters.
@@ -218,6 +216,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import <your_package>.PreferencesFactory
+import <your_package>.GlobalDataPreferences
+import <your_package>.UserSettingsPreferences
 
 @Module
 @InstallIn(SingletonComponent::class)
