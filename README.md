@@ -103,11 +103,12 @@ MMKV-KTX greatly simplifies the usage of key-value storage in Kotlin. As a resul
 
 #### Initialization
 
-Before using it, you need to initialize the MMKV instance.
+Before starting, please make sure you have initialized the [MMKV](https://github.com/Tencent/MMKV#quick-tutorial) instance. If not, initialize it anywhere that can access the Context, such as in the Application:
 
 ```kotlin
-override fun onCreate(savedInstanceState: Bundle?) {
-  super.onCreate(savedInstanceState) {
+class YourApplication : Application() {
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
     MMKV.initialize(this)
   }
 }
