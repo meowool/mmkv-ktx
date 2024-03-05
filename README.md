@@ -16,6 +16,7 @@ MMKV-KTX is an extension of [**MMKV**](https://github.com/Tencent/MMKV) designed
   - [Configure KSP Argument](#configure-ksp-argument)
   - [Import Dependencies](#import-dependencies)
 - [Basic Usage](#basic-usage)
+  - [Initialization](#initialization)
   - [Declaring Data and Converters](#declaring-data-and-converters)
   - [Reading and Writing Preferences](#reading-and-writing-preferences)
   - [Reactive Support (Kotlin Flow)](#reactive-support-kotlin-flow)
