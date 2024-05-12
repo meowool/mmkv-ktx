@@ -23,6 +23,7 @@ package com.meowool.mmkv.ktx.compiler.codegen
 import com.google.devtools.ksp.findActualType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -35,8 +36,10 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.kspDependencies
 import com.squareup.kotlinpoet.ksp.originatingKSFiles
+import com.squareup.kotlinpoet.ksp.toClassName
 import java.util.Locale
 
 abstract class CodegenStep {
@@ -185,6 +188,19 @@ abstract class CodegenStep {
   ) {
     val factoryClassName = className("PreferencesFactory")
     val factoryImplClassName = className("PreferencesFactoryImpl")
+    val objectTypeConverters = typeConverters.filter { it.classKind == ClassKind.OBJECT }
+    val classTypeConverters = typeConverters.filter { it.classKind != ClassKind.OBJECT }
+
+    val classTypeConvertersParams = classTypeConverters.map {
+      ParameterSpec(
+        name = it.simpleName.asString().replaceFirstChar(Char::lowercase),
+        type = it.toClassName()
+      )
+    }
+
+    // If there are non-singleton TypeConverters, the user needs to manually inject
+    // them.
+    val needInjectTypeConverters = objectTypeConverters.isNotEmpty()
 
     fun mutableClassName(raw: KSClassDeclaration) =
       className("Mutable" + raw.simpleName.asString())

@@ -19,7 +19,7 @@
 package com.meowool.mmkv.ktx
 
 /**
- * Marks an object class as a collection of type converters. All public extension functions
+ * Marks a class or object as a collection of type converters. All public extension functions
  * in this class will be treated as a type converter.
  *
  * When encoding/decoding a type that is not natively supported by MMKV, it will try to use

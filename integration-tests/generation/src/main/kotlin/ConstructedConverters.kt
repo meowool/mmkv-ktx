@@ -18,19 +18,13 @@
 
 package com.meowool.mmkv.ktx.tests
 
-import android.app.Activity
-import android.os.Bundle
-import android.util.Log
-import com.meowool.codegen.PreferencesFactory
+import com.meowool.mmkv.ktx.TypeConverters
 import com.meowool.mmkv.ktx.tests.utils.Json
-import com.tencent.mmkv.MMKV
 
-class MainActivity : Activity() {
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    MMKV.initialize(this)
-    val preferences = PreferencesFactory(ConstructedConverters(Json()))
-    val time = preferences.customData.get().date
-    Log.d("MainActivity", "time = ${time.time}")
-  }
+@TypeConverters
+class ConstructedConverters(private val json: Json) {
+  fun Map<String, String>.toJson(): String = json.encodeToJson(this)
+  fun String.toMap(): Map<String, String> = json.decodeFromJson(this)
+  fun Map<String, String>?.toNullableJson(): String? = this?.toJson()
+  fun String?.toNullableMap(): Map<String, String>? = this?.toMap()
 }

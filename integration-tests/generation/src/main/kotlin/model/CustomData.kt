@@ -32,4 +32,8 @@ data class CustomData(
   val list: List<Int> = emptyList(),
   @PersistDefaultValue
   val listNullable: List<Int>? = null,
+  @PersistDefaultValue
+  val map: Map<String, String> = emptyMap(),
+  @PersistDefaultValue
+  val mapNullable: Map<String, String>? = null,
 )

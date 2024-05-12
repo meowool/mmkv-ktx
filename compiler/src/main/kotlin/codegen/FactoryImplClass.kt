@@ -21,6 +21,7 @@ package com.meowool.mmkv.ktx.compiler.codegen
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 
@@ -28,6 +29,19 @@ class FactoryImplClass : FactoryClass() {
   override fun generate() {
     val className = context.factoryImplClassName
     val classBuilder = TypeSpec.classBuilder(className)
+      .primaryConstructor(
+        FunSpec.constructorBuilder()
+          .addParameters(context.classTypeConvertersParams)
+          .build()
+      )
+      .addProperties(
+        context.classTypeConvertersParams.map {
+          PropertySpec.builder(it.name, it.type)
+            .initializer(it.name)
+            .addModifiers(KModifier.PRIVATE)
+            .build()
+        }
+      )
       .addModifiers(KModifier.INTERNAL)
       .addSuperinterface(context.factoryClassName)
       .addAnnotation(PublishedApi::class)
@@ -51,9 +65,10 @@ class FactoryImplClass : FactoryClass() {
           FunSpec.getterBuilder()
             .beginControlFlow("return synchronized(this)")
             .addStatement(
-              "%N·?:·%T().also·{·%N·=·it·}",
+              "%N·?:·%T(%L).also·{·%N·=·it·}",
               innerPropertySpec,
               context.preferencesImplClassName(it),
+              context.classTypeConvertersParams.joinToString { param -> param.name  },
               innerPropertySpec,
             )
             .endControlFlow()

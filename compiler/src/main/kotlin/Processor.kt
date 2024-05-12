@@ -25,6 +25,7 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.symbol.ClassKind.CLASS
 import com.google.devtools.ksp.symbol.ClassKind.OBJECT
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -100,8 +101,8 @@ class Processor(
   }
 
   private fun KSClassDeclaration.checkTypeConverters() {
-    require(!isCompanionObject && classKind == OBJECT) {
-      "Only object class can be annotated with @TypeConverters."
+    require(!isCompanionObject && (classKind == OBJECT || classKind == CLASS)) {
+      "Only object or class can be annotated with @TypeConverters."
     }
     logger.logging("Found type converters", symbol = this)
   }

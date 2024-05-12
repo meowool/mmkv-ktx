@@ -24,8 +24,10 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.ksp.toClassName
 
 open class FactoryClass : CodegenStep() {
   override fun generate() {
@@ -44,10 +46,28 @@ open class FactoryClass : CodegenStep() {
     val classSpec = classBuilder.build()
 
     val factorySpec = FunSpec.builder(className.simpleName)
-      .returns(className)
       .addModifiers(KModifier.INLINE)
-      .addStatement("return %T()", context.factoryImplClassName)
+      .returns(className)
+      .addParameters(context.classTypeConvertersParams)
+      .addStatement(
+        "return·%T(%L)",
+        context.factoryImplClassName,
+        context.classTypeConvertersParams.joinToString { it.name }
+      )
       .build()
+
+    // if (context.needInjectTypeConverters) {
+    //   factorySpec
+    //     .addParameters(context.classTypeConvertersParams)
+    //     .addStatement(
+    //       "return·%T(%L)",
+    //       context.factoryImplClassName,
+    //       context.classTypeConvertersParams.joinToString { it.name }
+    //     )
+    //     .build()
+    // } else {
+    //   factorySpec.addStatement("return %T()", context.factoryImplClassName)
+    // }
 
     // TODO: Add KDoc for generated symbols.
     FileSpec.builder(className)

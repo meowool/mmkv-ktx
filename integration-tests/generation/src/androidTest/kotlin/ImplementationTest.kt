@@ -25,6 +25,7 @@ import assertk.assertions.matchesPredicate
 import com.meowool.codegen.PreferencesFactory
 import com.meowool.codegen.update
 import com.meowool.mmkv.ktx.tests.model.PrimitiveData
+import com.meowool.mmkv.ktx.tests.utils.Json
 import com.tencent.mmkv.MMKV
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -40,8 +41,8 @@ class ImplementationTest {
 
   @Test
   fun testPersistDefaultValue() {
-    val aPreferences = PreferencesFactory()
-    val bPreferences = PreferencesFactory()
+    val aPreferences = preferencesFactory()
+    val bPreferences = preferencesFactory()
 
     assertEquals(
       aPreferences.customData.get().date,
@@ -81,7 +82,7 @@ class ImplementationTest {
 
   @Test
   fun testUpdate() {
-    val preferences = PreferencesFactory()
+    val preferences = preferencesFactory()
 
     val newData = PrimitiveData(
       enum = PrimitiveData.Enum.Second,
@@ -103,7 +104,10 @@ class ImplementationTest {
 
     assertEquals(
       preferences.primitiveData.get().enum,
-      PreferencesFactory().primitiveData.get().enum,
+      preferencesFactory().primitiveData.get().enum,
     )
   }
+
+  private fun preferencesFactory(): PreferencesFactory =
+    PreferencesFactory(ConstructedConverters(Json()))
 }

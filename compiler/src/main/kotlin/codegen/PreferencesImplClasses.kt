@@ -20,6 +20,7 @@ package com.meowool.mmkv.ktx.compiler.codegen
 
 import com.google.devtools.ksp.getDeclaredFunctions
 import com.google.devtools.ksp.isPublic
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
@@ -209,9 +210,24 @@ class PreferencesImplClasses : CodegenStep() {
     }
 
     val classSpec = TypeSpec.classBuilder(className)
+      .primaryConstructor(
+        FunSpec.constructorBuilder()
+          .addParameters(context.classTypeConvertersParams)
+          .build()
+      )
       .addModifiers(KModifier.INTERNAL)
       .addSuperinterface(context.preferencesClassName(preferences))
       .addAnnotation(PublishedApi::class)
+      .apply {
+        context.classTypeConvertersParams.forEach {
+          addProperty(
+            PropertySpec.builder(it.name, it.type)
+              .initializer(it.name)
+              .addModifiers(KModifier.PRIVATE)
+              .build()
+          )
+        }
+      }
       .addProperty(mmkvPropertySpec)
       .addProperty(defaultPropertySpec)
       .addProperty(instancePropertySpec)
@@ -292,15 +308,34 @@ class PreferencesImplClasses : CodegenStep() {
             addStatement("$name·=·run·{")
             indent()
             addInitializationStatement(isPersistent, name, type, preferences)
-            when (typeConverter.encodeType) {
-              "Bytes", "String", "StringSet" -> addStatement(
-                "mmkv.decode%L(%S)?.%M() ?: default.$name",
-                typeConverter.encodeType, name, typeConverter.decoderName
-              )
-              else -> addStatement(
-                "mmkv.decode%L(%S).%M()",
-                typeConverter.encodeType, name, typeConverter.decoderName
-              )
+            typeConverter.decoderProvider?.let { provider ->
+              addStatement("with($provider)·{")
+              indent()
+              when (typeConverter.encodeType) {
+                "Bytes", "String", "StringSet" -> addStatement(
+                  "mmkv.decode%L(%S)?.%L() ?: default.$name",
+                  typeConverter.encodeType, name, typeConverter.decoderName.simpleName,
+                )
+                else -> addStatement(
+                  "mmkv.decode%L(%S).%L()",
+                  typeConverter.encodeType, name, typeConverter.decoderName.simpleName
+                )
+              }
+            } ?: run {
+              when (typeConverter.encodeType) {
+                "Bytes", "String", "StringSet" -> addStatement(
+                  "mmkv.decode%L(%S)?.%M() ?: default.$name",
+                  typeConverter.encodeType, name, typeConverter.decoderName
+                )
+                else -> addStatement(
+                  "mmkv.decode%L(%S).%M()",
+                  typeConverter.encodeType, name, typeConverter.decoderName
+                )
+              }
+            }
+            typeConverter.decoderProvider?.let {
+              unindent()
+              addStatement("}")
             }
             unindent()
             addStatement("},")
@@ -400,10 +435,23 @@ class PreferencesImplClasses : CodegenStep() {
             "Unsupported type '${type.logName()}' for property '$name', " +
             "consider replacing it with a supported one or creating a type converter."
         }
-        addStatement(
-          "mmkv.encode(%S,·$value.%M())",
-          name, typeConverter.encoderName,
-        )
+        typeConverter.encoderProvider?.let { provider ->
+          addStatement("with($provider)·{")
+          indent()
+          addStatement(
+            "mmkv.encode(%S,·$value.%L())",
+            name, typeConverter.encoderName.simpleName,
+          )
+        } ?: run {
+          addStatement(
+            "mmkv.encode(%S,·$value.%M())",
+            name, typeConverter.encoderName,
+          )
+        }
+        typeConverter.encoderProvider?.let {
+          unindent()
+          addStatement("}")
+        }
       }
     }
   }
@@ -480,5 +528,14 @@ class PreferencesImplClasses : CodegenStep() {
     val decoderName: MemberName,
     val encoderName: MemberName,
     val encodeType: String,
-  )
+  ) {
+    val decoderProvider: String? = decoder.parentDeclaration?.getProviderName()
+    val encoderProvider: String? = encoder.parentDeclaration?.getProviderName()
+
+    private fun KSDeclaration.getProviderName() = this
+      .takeIf { (it as? KSClassDeclaration)?.classKind == ClassKind.CLASS }
+      ?.simpleName
+      ?.asString()
+      ?.replaceFirstChar(Char::lowercase)
+  }
 }
