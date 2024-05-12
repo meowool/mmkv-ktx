@@ -59,7 +59,7 @@ fun Project.configureAndroid() = plugins.withType<BasePlugin> {
     compileSdk = 34
     testOptions.unitTests.isIncludeAndroidResources = true
     defaultConfig {
-      minSdk = 19
+      minSdk = 23
       testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
       if (this is ApplicationDefaultConfig) targetSdk = 34
     }
