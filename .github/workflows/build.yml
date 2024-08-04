@@ -82,14 +82,19 @@ jobs:
           CURRENT_VERSION=$(cat version.txt)
           echo "Current version: $CURRENT_VERSION"
 
+          # Update README.md
+          perl -i -pe 's/val mmkvKtxVersion = "[0-9.]*"/val mmkvKtxVersion = "'"$CURRENT_VERSION"'"/' README.md
+          perl -i -pe 's/mmkv-ktx = "[0-9.]*"/mmkv-ktx = "'"$CURRENT_VERSION"'"/' README.md
+          git add README.md
+
           # Bump version
-          NEW_VERSION=$(semver bump patch $CURRENT_VERSION)
-          echo "New version: $NEW_VERSION"
-          echo $NEW_VERSION > version.txt
+          NEXT_VERSION=$(semver bump patch $CURRENT_VERSION)
+          echo "Next version: $NEXT_VERSION"
+          echo $NEXT_VERSION > version.txt
 
           # Commit version
           git config --local user.name "Meowool Robot"
           git config --local user.email "meowool@proton.me"
           git add version.txt
-          git commit -m "chore: prepare for next development iteration"
+          git commit -m 'chore: update version in `README.md` & prepare for next development iteration'
           git push
