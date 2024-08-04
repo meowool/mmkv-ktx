@@ -59,7 +59,7 @@ Depending on your project setup, follow the appropriate steps to include MMKV-KT
 >**build.gradle.kts**
 ```kotlin
 dependencies {
-  val mmkvKtxVersion = "0.1.4"
+  val mmkvKtxVersion = "0.1.7"
   implementation("com.meowool:mmkv:$mmkvKtxVersion")
   ksp("com.meowool:mmkv-compiler:$mmkvKtxVersion")
 }
@@ -74,7 +74,7 @@ dependencies {
 > **libs.versions.toml**
 ```toml
 [versions]
-mmkv-ktx = "0.1.4"
+mmkv-ktx = "0.1.7"
 
 [librarys]
 mmkv-ktx = { module = "com.meowool:mmkv", version.ref = "mmkv-ktx" }
@@ -158,7 +158,7 @@ class Converters {
     putLong(mostSignificantBits)
     putLong(leastSignificantBits)
   }.array()
-  
+
   fun ByteArray.toUUID(): UUID = with(ByteBuffer.wrap(this)) {
     UUID(long, long)
   }
@@ -256,7 +256,7 @@ class SettingsViewModel(
   val followingSystemTheme = userSettings.mapStateFlow {
     it.themeAppearance == ThemeAppearance.Auto
   }
-  
+
   fun saveToken(value: String) {
     checkToken(value) { ... }
     userSettings.update {
