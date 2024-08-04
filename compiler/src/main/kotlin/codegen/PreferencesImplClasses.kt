@@ -72,7 +72,7 @@ class PreferencesImplClasses : CodegenStep() {
     val id = annotation.findStringArgument("id") ?: preferences.simpleName.asString()
 
     val mmkvPropertySpec = PropertySpec.builder("mmkv", MMKV)
-      .addModifiers(KModifier.PRIVATE)
+      .addModifiers(KModifier.OVERRIDE)
       .initializer("%T.mmkvWithID(%S)", MMKV, id)
       .build()
 

@@ -19,11 +19,13 @@
 package com.meowool.mmkv.ktx.compiler.codegen
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.meowool.mmkv.ktx.compiler.Names.MMKV
 import com.meowool.mmkv.ktx.compiler.Names.StateFlow
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.UNIT
@@ -35,6 +37,10 @@ class PreferencesClasses : CodegenStep() {
 
   private fun generatePreferences(preferences: KSClassDeclaration) {
     val className = context.preferencesClassName(preferences)
+
+    val mmkvSpec = PropertySpec.builder("mmkv", MMKV)
+      .addModifiers(KModifier.ABSTRACT)
+      .build()
 
     val getSpec = FunSpec.builder("get")
       .addModifiers(KModifier.ABSTRACT)
@@ -70,6 +76,7 @@ class PreferencesClasses : CodegenStep() {
       .build()
 
     val classSpec = TypeSpec.interfaceBuilder(className)
+      .addProperty(mmkvSpec)
       .addFunction(getSpec)
       .addFunction(mutableSpec)
       .addFunction(updateSpec)
