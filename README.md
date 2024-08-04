@@ -1,5 +1,11 @@
 # MMKV-KTX
 
+![Maven Central Version](https://img.shields.io/maven-central/v/com.meowool/mmkv)
+![GitHub last commit](https://img.shields.io/github/last-commit/meowool/mmkv-ktx)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/meowool/mmkv-ktx?label=activity)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/meowool/mmkv-ktx/build.yml)
+![GitHub License](https://img.shields.io/github/license/meowool/mmkv-ktx)
+
 MMKV-KTX is an extension of [**MMKV**](https://github.com/Tencent/MMKV) designed to offer a seamless key-value storage solution for Kotlin, integrating tightly with the language's syntax and features.
 
 ## Features
