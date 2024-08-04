@@ -7,7 +7,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/meowool/mmkv-ktx)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/meowool/mmkv-ktx?label=activity)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/meowool/mmkv-ktx/build.yml)
-![GitHub License](https://img.shields.io/github/license/meowool/mmkv-ktx)
+![GitHub License](https://img.shields.io/github/license/meowool/mmkv-ktx?color=9370DB)
 
 </div>
 <div align="center" style="display:grid;place-items:center;">
