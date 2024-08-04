@@ -154,6 +154,12 @@ abstract class CodegenStep {
       else -> value.takeIf { it.isNotEmpty() }
     }
 
+  fun KSAnnotation?.findIntArgument(name: String) =
+    when (val value = findArgument(name)?.value as? Int) {
+      null -> null
+      else -> value
+    }
+
   fun FileSpec.write(originatingDeclarations: Iterable<KSDeclaration>) =
     write(originatingDeclarations.mapNotNull { it.containingFile }.toSet())
 
@@ -188,7 +194,6 @@ abstract class CodegenStep {
   ) {
     val factoryClassName = className("PreferencesFactory")
     val factoryImplClassName = className("PreferencesFactoryImpl")
-    val objectTypeConverters = typeConverters.filter { it.classKind == ClassKind.OBJECT }
     val classTypeConverters = typeConverters.filter { it.classKind != ClassKind.OBJECT }
 
     val classTypeConvertersParams = classTypeConverters.map {
@@ -197,10 +202,6 @@ abstract class CodegenStep {
         type = it.toClassName()
       )
     }
-
-    // If there are non-singleton TypeConverters, the user needs to manually inject
-    // them.
-    val needInjectTypeConverters = objectTypeConverters.isNotEmpty()
 
     fun mutableClassName(raw: KSClassDeclaration) =
       className("Mutable" + raw.simpleName.asString())

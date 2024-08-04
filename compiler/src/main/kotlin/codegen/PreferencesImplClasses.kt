@@ -48,6 +48,7 @@ import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LONG
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.SET
@@ -70,10 +71,24 @@ class PreferencesImplClasses : CodegenStep() {
     val mutableImplClassName = context.mutableImplClassName(preferences)
     val annotation = requireNotNull(preferences.findAnnotation(Preferences))
     val id = annotation.findStringArgument("id") ?: preferences.simpleName.asString()
+    val expires = annotation.findIntArgument("expires") ?: -1
+    val cryptKey = annotation.findStringArgument("cryptKey") ?: ""
 
     val mmkvPropertySpec = PropertySpec.builder("mmkv", MMKV)
       .addModifiers(KModifier.OVERRIDE)
-      .initializer("%T.mmkvWithID(%S)", MMKV, id)
+      .initializer(buildCodeBlock {
+        add("%T.mmkvWithID(%S", MMKV, id)
+        if (cryptKey.isNotEmpty()) {
+          add(", %M, %S)", MMKV.member("SINGLE_PROCESS_MODE"), cryptKey)
+        } else {
+          add(")")
+        }
+        if (expires > -1) {
+          beginControlFlow(".apply·{")
+          addStatement("enableAutoKeyExpire(%L)", expires)
+          endControlFlow()
+        }
+      })
       .build()
 
     val defaultPropertySpec = PropertySpec.builder("default", dataClassName)

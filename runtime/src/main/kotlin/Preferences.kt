@@ -73,4 +73,18 @@ annotation class Preferences(
    * For example: `GeneralSettings` -> `generalSettings`.
    */
   val name: String = "",
+
+  /**
+   * The expiration time (in milliseconds) for the preferences.
+   * If set to a value greater than -1, the preferences will expire after the specified time.
+   * If set to -1 (the default value), the preferences will never expire.
+   */
+  val expires: Int = -1,
+
+  /**
+   * The encryption key to use for the preferences.
+   * If set to a non-empty string, the preferences will be encrypted using the specified key.
+   * If left empty (the default value), the preferences will not be encrypted.
+   */
+  val cryptKey: String = "",
 )

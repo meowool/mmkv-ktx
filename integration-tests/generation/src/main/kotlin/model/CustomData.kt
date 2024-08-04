@@ -22,7 +22,7 @@ import com.meowool.mmkv.ktx.PersistDefaultValue
 import com.meowool.mmkv.ktx.Preferences
 import java.util.Date
 
-@Preferences
+@Preferences(expires = 100, cryptKey = "abc")
 data class CustomData(
   @PersistDefaultValue
   val date: Date = Date(),
