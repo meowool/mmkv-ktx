@@ -51,4 +51,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 google-ksp = "com.google.devtools.ksp:2.0.21-1.0.25"
-maven-publish = "com.vanniktech.maven.publish:0.29.0"
+maven-publish = "com.vanniktech.maven.publish:0.30.0"
