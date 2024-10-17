@@ -71,7 +71,7 @@ Depending on your project setup, follow the appropriate steps to include MMKV-KT
 >**build.gradle.kts**
 ```kotlin
 dependencies {
-  val mmkvKtxVersion = "0.1.7"
+  val mmkvKtxVersion = "0.1.8"
   implementation("com.meowool:mmkv:$mmkvKtxVersion")
   ksp("com.meowool:mmkv-compiler:$mmkvKtxVersion")
 }
@@ -86,7 +86,7 @@ dependencies {
 > **libs.versions.toml**
 ```toml
 [versions]
-mmkv-ktx = "0.1.7"
+mmkv-ktx = "0.1.8"
 
 [librarys]
 mmkv-ktx = { module = "com.meowool:mmkv", version.ref = "mmkv-ktx" }
