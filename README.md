@@ -174,6 +174,10 @@ class Converters {
   fun ByteArray.toUUID(): UUID = with(ByteBuffer.wrap(this)) {
     UUID(long, long)
   }
+
+  fun ThemeAppearance.toInt() = ordinal
+
+  fun Int.toThemeAppearance() = ThemeAppearance.entries[this]
 }
 ```
 

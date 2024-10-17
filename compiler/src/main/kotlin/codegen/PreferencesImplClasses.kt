@@ -436,13 +436,13 @@ class PreferencesImplClasses : CodegenStep() {
       primitive != null || declaration.superTypes.contains(Parcelable) ->
         addStatement("mmkv.encode(%S, $value)", name)
 
-      Modifier.ENUM in declaration.modifiers -> addStatement(
-        when (resolvedType.isMarkedNullable) {
-          true -> "mmkv.encode(%S,·$value?.ordinal·?:·-1)"
-          false -> "mmkv.encode(%S,·$value.ordinal)"
-        },
-        name
-      )
+      // Modifier.ENUM in declaration.modifiers -> addStatement(
+      //   when (resolvedType.isMarkedNullable) {
+      //     true -> "mmkv.encode(%S,·$value?.ordinal·?:·-1)"
+      //     false -> "mmkv.encode(%S,·$value.ordinal)"
+      //   },
+      //   name
+      // )
 
       else -> {
         val typeConverter = requireNotNull(resolvedType.findTypeConverter(declaration)) {

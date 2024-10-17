@@ -36,9 +36,6 @@ import android.os.Parcelable
  * - [ByteArray]
  * - [String]
  * - [Set]<[String]>
- * - [Enum]
- *   **Enum type is also supported, but it is stored behind the scenes via [Enum.ordinal],
- *   so don't change the order of the enum.**
  * - [Parcelable]
  *   **Any class that implements the [Parcelable] interface also be supported**
  *
@@ -49,11 +46,8 @@ import android.os.Parcelable
  * ```
  * @Preferences
  * data class GeneralSettings(
- *   val themeAppearance: ThemeAppearance = ThemeAppearance.Auto,
  *   val checkUpdates: Boolean = true,
  * )
- *
- * enum class ThemeAppearance { Light, Dark, Auto }
  * ```
  */
 @Target(AnnotationTarget.CLASS)

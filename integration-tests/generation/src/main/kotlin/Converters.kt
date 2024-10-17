@@ -19,6 +19,7 @@
 package com.meowool.mmkv.ktx.tests
 
 import com.meowool.mmkv.ktx.TypeConverters
+import com.meowool.mmkv.ktx.tests.model.PrimitiveData
 import java.nio.ByteBuffer
 import java.util.Date
 
@@ -28,6 +29,12 @@ object Converters {
   fun Long.toDate(): Date = Date(this)
   fun Date?.toLongNullable(): Long = this?.time ?: -1
   fun Long.toDateNullable(): Date? = if (this == -1L) null else Date(this)
+
+  fun PrimitiveData.Enum.toInt(): Int = ordinal
+  fun Int.toEnum(): PrimitiveData.Enum = PrimitiveData.Enum.entries[this]
+
+  fun PrimitiveData.Enum?.toIntNullable(): Int = this?.ordinal ?: -1
+  fun Int.toEnumNullable(): PrimitiveData.Enum? = PrimitiveData.Enum.entries.getOrNull(-1)
 
   fun List<Int>.toBytes(): ByteArray = ByteBuffer.allocate(size * 4).apply {
     forEach { putInt(it) }
