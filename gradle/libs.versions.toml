@@ -11,7 +11,7 @@ detekt = "1.23.7"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
 ### AndroidX
-androidx-core = "androidx.core:core-ktx:1.13.1"
+androidx-core = "androidx.core:core-ktx:1.15.0"
 androidx-test = "androidx.test:core-ktx:1.6.1"
 androidx-test-rules = "androidx.test:rules:1.6.1"
 androidx-test-junit = "androidx.test.ext:junit-ktx:1.2.1"
