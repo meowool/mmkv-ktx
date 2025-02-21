@@ -4,7 +4,7 @@ kotlin = "2.1.10"
 androidx-activity = "1.10.0"
 square-kotlinpoet = "1.14.2"
 google-hilt = "2.49"
-detekt = "1.23.7"
+detekt = "1.23.8"
 
 [libraries]
 ### Kotlin
