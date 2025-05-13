@@ -1,6 +1,6 @@
 [versions]
 agp = "8.10.0"
-kotlin = "2.1.20"
+kotlin = "2.1.21"
 androidx-activity = "1.10.1"
 square-kotlinpoet = "1.14.2"
 google-hilt = "2.49"
@@ -24,7 +24,7 @@ androidx-compose-bom = "dev.chrisbanes.compose:compose-bom:2023.12.00-alpha04"
 androidx-compose-compiler = "androidx.compose.compiler:compiler:1.5.15"
 androidx-compose-material = { module = "androidx.compose.material:material" }
 ### Google
-google-ksp = "com.google.devtools.ksp:symbol-processing-api:2.1.20-2.0.1"
+google-ksp = "com.google.devtools.ksp:symbol-processing-api:2.1.21-2.0.1"
 ### Square
 square-kotlinpoet = "com.squareup:kotlinpoet-ksp:1.18.1"
 ### Build system
@@ -50,5 +50,5 @@ android-test = { id = "com.android.test", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
-google-ksp = "com.google.devtools.ksp:2.1.20-2.0.1"
+google-ksp = "com.google.devtools.ksp:2.1.21-2.0.1"
 maven-publish = "com.vanniktech.maven.publish:0.31.0"
