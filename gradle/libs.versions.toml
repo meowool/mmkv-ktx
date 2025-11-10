@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.0"
+agp = "8.13.1"
 kotlin = "2.2.21"
 androidx-activity = "1.11.0"
 square-kotlinpoet = "1.14.2"
