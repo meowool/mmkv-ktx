@@ -40,7 +40,7 @@ detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plu
 ## Testing
 robolectric = "org.robolectric:robolectric:4.16.1"
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
-assertj = "org.assertj:assertj-core:3.27.6"
+assertj = "org.assertj:assertj-core:3.27.7"
 
 [plugins]
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
