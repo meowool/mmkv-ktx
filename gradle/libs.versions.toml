@@ -26,7 +26,7 @@ androidx-compose-material = { module = "androidx.compose.material:material" }
 ### Google
 google-ksp = "com.google.devtools.ksp:symbol-processing-api:2.3.5"
 ### Square
-square-kotlinpoet = "com.squareup:kotlinpoet-ksp:1.18.1"
+square-kotlinpoet = "com.squareup:kotlinpoet-ksp:2.2.0"
 ### Build system
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
